@@ -40,6 +40,19 @@ async def run():
                         valor = item.get_text(strip=True).replace(etiqueta.get_text(strip=True), "").strip()
                         datos[clave] = valor
 
+                # aseguramos que siempre tenga las mismas claves
+                claves_interes = [
+                    "Expediente", 
+                    "Carátula", 
+                    "Delitos", 
+                    "Radicación del expediente", 
+                    "Estado", 
+                    "Resolución/es",   # la agregamos fijo
+                    "Última actualización"
+                ]
+                for clave in claves_interes:
+                    datos.setdefault(clave, "")
+
                 # Usamos el campo "Expediente" como identificador único
                 identificador = datos.get("Expediente")
                 if identificador and identificador not in vistos:
