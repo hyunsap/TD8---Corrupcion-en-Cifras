@@ -77,7 +77,7 @@ async def run():
     # Guardar en CSV
     if resultados:
         keys = resultados[0].keys()
-        with open("prueba2_expedientes_paginacion.csv", "w", newline="", encoding="utf-8") as f:
+        with open("prueba3_expedientes_paginacion.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=keys)
             writer.writeheader()
             writer.writerows(resultados)
