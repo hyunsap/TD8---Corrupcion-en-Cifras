@@ -29,6 +29,7 @@ async def run():
                 info_items = bloque.find("ul", class_="info").find_all("li")
                 datos = {}
                 imputados = []
+                letrados = []
                 resoluciones = []
 
                 # Eliminar botones irrelevantes
@@ -62,14 +63,23 @@ async def run():
                     ]
                     datos["Radicación del expediente"] = " | ".join([p.get_text(strip=True) for p in partes if p])
 
-                # Intervinientes e imputados con letrados
+                # Intervinientes e imputados
                 panel_interv = bloque.select_one("div.ver-todos-panel")
                 if panel_interv:
                     li_imputados = panel_interv.select("div.item-especial-largo-2 ul li")
                     for li in li_imputados:
-                        imputado_nombre = "".join(li.find_all(string=True, recursive=False)).strip()
-                        letrados_imputado = [l.get_text(strip=True) for l in li.select("div.item")]
-                        imputados.append((imputado_nombre, letrados_imputado))
+                        texto = li.get_text(strip=True)
+                        if texto:
+                            imputados.append(texto)
+
+                    # Letrados dentro de imputados
+                    panel_letrados = panel_interv.select_one("div.ver-todos-panel-2")
+                    if panel_letrados:
+                        letrado_items = panel_letrados.select("div.item")
+                        for l in letrado_items:
+                            texto = l.get_text(strip=True)
+                            if texto:
+                                letrados.append(texto)
 
                 # Resoluciones
                 panel_res = bloque.select_one("li:has(span:contains('Resolución/es')) div.ver-todos-panel")
@@ -92,6 +102,7 @@ async def run():
                 identificador = datos.get("Expediente")
                 if identificador and identificador not in vistos:
                     datos["__imputados__"] = imputados
+                    datos["__letrados__"] = letrados
                     datos["__resoluciones__"] = resoluciones
                     resultados.append(datos)
                     vistos.add(identificador)
@@ -124,17 +135,21 @@ async def run():
                 fila = {k: r.get(k, "") for k in fieldnames}
                 writer.writerow(fila)
 
-        # Imputados + letrados en un mismo CSV limpio
+        # Imputados
         with open("4_imputados.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow(["Expediente", "Imputado", "Letrado"])
+            writer.writerow(["Expediente", "Imputado"])
             for r in resultados:
-                for (imp, letrs) in r.get("__imputados__", []):
-                    if not letrs:
-                        writer.writerow([r["Expediente"], imp, ""])
-                    else:
-                        for l in letrs:
-                            writer.writerow([r["Expediente"], imp, l])
+                for i in r.get("__imputados__", []):
+                    writer.writerow([r["Expediente"], i])
+
+        # Letrados
+        with open("4_letrados.csv", "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Expediente", "Letrado"])
+            for r in resultados:
+                for l in r.get("__letrados__", []):
+                    writer.writerow([r["Expediente"], l])
 
         # Resoluciones
         with open("4_resoluciones.csv", "w", newline="", encoding="utf-8") as f:
@@ -144,6 +159,6 @@ async def run():
                 for res in r.get("__resoluciones__", []):
                     writer.writerow([r["Expediente"], res])
 
-    print("✅ Datos guardados en 4_expedientes.csv, 4_imputados.csv y 4_resoluciones.csv")
+    print("✅ Datos guardados en 4_expedientes.csv, 4_imputados.csv, 4_letrados.csv y 4_resoluciones.csv")
 
 asyncio.run(run())
