@@ -124,17 +124,22 @@ async def run():
                 fila = {k: r.get(k, "") for k in fieldnames}
                 writer.writerow(fila)
 
-        # Imputados + letrados en un mismo CSV limpio
+        # Imputados (solo nombres)
         with open("4_imputados.csv", "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Expediente", "Imputado"])
+            for r in resultados:
+                for (imp, _) in r.get("__imputados__", []):
+                    writer.writerow([r["Expediente"], imp])
+
+        # Letrados (relación imputado-letrado)
+        with open("4_letrados.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["Expediente", "Imputado", "Letrado"])
             for r in resultados:
                 for (imp, letrs) in r.get("__imputados__", []):
-                    if not letrs:
-                        writer.writerow([r["Expediente"], imp, ""])
-                    else:
-                        for l in letrs:
-                            writer.writerow([r["Expediente"], imp, l])
+                    for l in letrs:
+                        writer.writerow([r["Expediente"], imp, l])
 
         # Resoluciones
         with open("4_resoluciones.csv", "w", newline="", encoding="utf-8") as f:
@@ -144,6 +149,7 @@ async def run():
                 for res in r.get("__resoluciones__", []):
                     writer.writerow([r["Expediente"], res])
 
-    print("✅ Datos guardados en 4_expedientes.csv, 4_imputados.csv y 4_resoluciones.csv")
+    print("✅ Datos guardados en 4_expedientes.csv, 4_imputados.csv, 4_letrados.csv y 4_resoluciones.csv")
+
 
 asyncio.run(run())
