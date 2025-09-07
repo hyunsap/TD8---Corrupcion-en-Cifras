@@ -2,7 +2,131 @@ import asyncio
 from playwright.async_api import async_playwright
 from bs4 import BeautifulSoup
 import csv
+import psycopg2
 
+# ==============================
+# Función para guardar en la DB
+# ==============================
+from datetime import datetime
+
+def guardar_en_db(resultados):
+    conn = psycopg2.connect(
+        dbname="corrupcion_db",
+        user="admin",
+        password="td8corrupcion",
+        host="localhost",
+        port="5432"
+    )
+    cur = conn.cursor()
+
+    # Insertar un fuero por defecto (si no tienes datos específicos)
+    cur.execute("""
+        INSERT INTO fuero (nombre) VALUES ('Federal') 
+        ON CONFLICT (nombre) DO NOTHING 
+        RETURNING fuero_id;
+    """)
+    row = cur.fetchone()
+    fuero_id = row[0] if row else cur.execute("SELECT fuero_id FROM fuero WHERE nombre = 'Federal';") or cur.fetchone()[0]
+
+    # Insertar una jurisdicción por defecto
+    cur.execute("""
+        INSERT INTO jurisdiccion (ambito) VALUES ('Federal') 
+        ON CONFLICT DO NOTHING 
+        RETURNING jurisdiccion_id;
+    """)
+    row = cur.fetchone()
+    jurisdiccion_id = row[0] if row else cur.execute("SELECT jurisdiccion_id FROM jurisdiccion WHERE ambito = 'Federal';") or cur.fetchone()[0]
+
+    # Insertar un tribunal por defecto
+    cur.execute("""
+        INSERT INTO tribunal (nombre, jurisdiccion_id) VALUES ('Tribunal Federal', %s) 
+        ON CONFLICT DO NOTHING 
+        RETURNING tribunal_id;
+    """, (jurisdiccion_id,))
+    row = cur.fetchone()
+    tribunal_id = row[0] if row else cur.execute("SELECT tribunal_id FROM tribunal WHERE nombre = 'Tribunal Federal';") or cur.fetchone()[0]
+
+    # Insertar un estado procesal por defecto
+    cur.execute("""
+        INSERT INTO estado_procesal (nombre) VALUES (%s) 
+        ON CONFLICT (nombre) DO NOTHING 
+        RETURNING estado_procesal_id;
+    """, (resultados[0]["Estado"],))
+    row = cur.fetchone()
+    estado_procesal_id = row[0] if row else cur.execute("SELECT estado_procesal_id FROM estado_procesal WHERE nombre = %s;", (resultados[0]["Estado"],)) or cur.fetchone()[0]
+
+    for r in resultados:
+        # Convertir Última actualización a formato de fecha
+        try:
+            fecha_ultimo_mov = datetime.strptime(r["Última actualización"], "%d/%m/%Y").date()
+        except (ValueError, KeyError):
+            fecha_ultimo_mov = None  # O usa una fecha por defecto
+
+        # Insertar expediente
+        cur.execute("""
+            INSERT INTO expediente (numero_expediente, caratula, fecha_inicio, fecha_ultimo_movimiento, fuero_id, tribunal_id, estado_procesal_id)
+            VALUES (%s, %s, CURRENT_DATE, %s, %s, %s, %s)
+            ON CONFLICT (numero_expediente) DO NOTHING
+            RETURNING numero_expediente;
+        """, (
+            r["Expediente"],
+            r["Carátula"],
+            fecha_ultimo_mov,
+            fuero_id,
+            tribunal_id,
+            estado_procesal_id
+        ))
+
+        # Verificar si se insertó el expediente
+        row = cur.fetchone()
+        if not row:
+            continue  # El expediente ya existía, pasar al siguiente
+
+        # Insertar imputados y letrados
+        for (imp, letrs) in r.get("__imputados__", []):
+            # Insertar parte (imputado)
+            cur.execute("""
+                INSERT INTO parte (documento_cuit, numero_expediente, tipo_persona, nombre_razon_social)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (documento_cuit, numero_expediente) DO NOTHING
+                RETURNING documento_cuit;
+            """, (imp, r["Expediente"], "fisica", imp))  # Asumimos tipo_persona='fisica' y documento_cuit=nombre por falta de datos
+            row_p = cur.fetchone()
+            if not row_p:
+                continue
+
+            # Insertar rol_parte
+            cur.execute("""
+                INSERT INTO rol_parte (numero_expediente, documento_cuit, nombre)
+                VALUES (%s, %s, %s)
+                ON CONFLICT DO NOTHING;
+            """, (r["Expediente"], imp, "imputado"))
+
+            # Insertar letrados
+            for l in letrs:
+                cur.execute("""
+                    INSERT INTO letrado (nombre)
+                    VALUES (%s)
+                    ON CONFLICT (nombre) DO NOTHING
+                    RETURNING letrado_id;
+                """, (l,))
+                row_l = cur.fetchone()
+                if row_l:
+                    letrado_id = row_l[0]
+                else:
+                    cur.execute("SELECT letrado_id FROM letrado WHERE nombre = %s;", (l,))
+                    letrado_id = cur.fetchone()[0]
+
+                # Nota: Aquí falta la inserción en parte_letrado porque la tabla no existe en init.sql
+                # Si quieres usar parte_letrado, debes crear la tabla (ver más abajo)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+# ==============================
+# Scraper
+# ==============================
 async def run():
     url = "https://www.csjn.gov.ar/tribunales-federales-nacionales/causas-de-corrupcion.html"
     resultados = []
@@ -31,38 +155,15 @@ async def run():
                 imputados = []
                 resoluciones = []
 
-                # Eliminar botones irrelevantes
-                for item in info_items:
-                    for btn in item.select("div.ver-todos, div.ver-menos, div.ver-todos-2, div.ver-menos-2"):
-                        btn.decompose()
-
                 for item in info_items:
                     etiqueta = item.find("span")
                     if not etiqueta:
                         continue
-
                     clave = etiqueta.get_text(strip=True).replace(":", "")
+                    valor = item.get_text(strip=True).replace(etiqueta.get_text(strip=True), "").strip()
+                    datos[clave] = valor
 
-                    if clave == "Carátula":
-                        # Solo texto directo, sin hijos
-                        valor = "".join(item.find_all(string=True, recursive=False)).strip()
-                        datos[clave] = valor
-                    else:
-                        valor = item.get_text(strip=True).replace(etiqueta.get_text(strip=True), "").strip()
-                        datos[clave] = valor
-
-                # Última radicación
-                radicacion_div = bloque.select_one("div.item-especial-largo.soy-first-item-largo")
-                if radicacion_div:
-                    partes = [
-                        radicacion_div.select_one("div.t1a"),
-                        radicacion_div.select_one("div.t2a"),
-                        radicacion_div.select_one("div.t3a"),
-                        radicacion_div.select_one("div.t4a")
-                    ]
-                    datos["Radicación del expediente"] = " | ".join([p.get_text(strip=True) for p in partes if p])
-
-                # Intervinientes e imputados con letrados
+                # Intervinientes
                 panel_interv = bloque.select_one("div.ver-todos-panel")
                 if panel_interv:
                     li_imputados = panel_interv.select("div.item-especial-largo-2 ul li")
@@ -71,28 +172,9 @@ async def run():
                         letrados_imputado = [l.get_text(strip=True) for l in li.select("div.item")]
                         imputados.append((imputado_nombre, letrados_imputado))
 
-                # Resoluciones
-                panel_res = bloque.select_one("li:has(span:contains('Resolución/es')) div.ver-todos-panel")
-                if panel_res:
-                    resol_items = panel_res.select("div.item")
-                    for r in resol_items:
-                        texto = r.get_text(strip=True)
-                        if texto:
-                            resoluciones.append(texto)
-
-                # Asegurar claves
-                claves_interes = [
-                    "Expediente", "Carátula", "Delitos",
-                    "Radicación del expediente", "Estado",
-                    "Última actualización"
-                ]
-                for clave in claves_interes:
-                    datos.setdefault(clave, "")
-
                 identificador = datos.get("Expediente")
                 if identificador and identificador not in vistos:
                     datos["__imputados__"] = imputados
-                    datos["__resoluciones__"] = resoluciones
                     resultados.append(datos)
                     vistos.add(identificador)
 
@@ -109,47 +191,18 @@ async def run():
 
         await browser.close()
 
-    # === Exportación ===
-    if resultados:
-        # Expedientes
-        fieldnames = [
-            "Expediente", "Carátula", "Delitos",
-            "Radicación del expediente", "Estado",
-            "Última actualización"
-        ]
-        with open("4_expedientes.csv", "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            for r in resultados:
-                fila = {k: r.get(k, "") for k in fieldnames}
-                writer.writerow(fila)
+    # Guardar CSV (opcional)
+    with open("expedientes.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["Expediente", "Carátula", "Estado", "Última actualización"])
+        writer.writeheader()
+        for r in resultados:
+            fila = {k: r.get(k, "") for k in ["Expediente", "Carátula", "Estado", "Última actualización"]}
+            writer.writerow(fila)
 
-        # Imputados (solo nombres)
-        with open("4_imputados.csv", "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Expediente", "Imputado"])
-            for r in resultados:
-                for (imp, _) in r.get("__imputados__", []):
-                    writer.writerow([r["Expediente"], imp])
-
-        # Letrados (relación imputado-letrado)
-        with open("4_letrados.csv", "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Expediente", "Imputado", "Letrado"])
-            for r in resultados:
-                for (imp, letrs) in r.get("__imputados__", []):
-                    for l in letrs:
-                        writer.writerow([r["Expediente"], imp, l])
-
-        # Resoluciones
-        with open("4_resoluciones.csv", "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Expediente", "Resolución"])
-            for r in resultados:
-                for res in r.get("__resoluciones__", []):
-                    writer.writerow([r["Expediente"], res])
-
-    print("✅ Datos guardados en 4_expedientes.csv, 4_imputados.csv, 4_letrados.csv y 4_resoluciones.csv")
+    # Guardar en DB
+    guardar_en_db(resultados)
+    print("✅ Datos guardados en expedientes.csv y en PostgreSQL")
 
 
-asyncio.run(run())
+if __name__ == "__main__":
+    asyncio.run(run())

@@ -1,17 +1,22 @@
+-- ============================================
 -- Configuración inicial
+-- ============================================
 SET client_encoding = 'UTF8';
 SET timezone = 'America/Argentina/Buenos_Aires';
 
--- Crear esquema principal si no existe
 CREATE SCHEMA IF NOT EXISTS public;
 
--- Tabla Fuero
+-- ============================================
+-- Entidades principales
+-- ============================================
+
+-- Fuero
 CREATE TABLE fuero (
     fuero_id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE
 );
 
--- Tabla Jurisdicción
+-- Jurisdicción
 CREATE TABLE jurisdiccion (
     jurisdiccion_id SERIAL PRIMARY KEY,
     ambito VARCHAR(50) NOT NULL,
@@ -19,7 +24,7 @@ CREATE TABLE jurisdiccion (
     departamento_judicial VARCHAR(100)
 );
 
--- Tabla Tribunal
+-- Tribunal
 CREATE TABLE tribunal (
     tribunal_id SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
@@ -32,7 +37,7 @@ CREATE TABLE tribunal (
         ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
--- Tabla Secretaría
+-- Secretaría
 CREATE TABLE secretaria (
     secretaria_id SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
@@ -42,20 +47,20 @@ CREATE TABLE secretaria (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Tabla Estado Procesal
+-- Estado Procesal
 CREATE TABLE estado_procesal (
     estado_procesal_id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
     etapa VARCHAR(100)
 );
 
--- Tabla Tipo Delito
+-- Tipo Delito
 CREATE TABLE tipo_delito (
     tipo VARCHAR(50) PRIMARY KEY,
     detalle TEXT
 );
 
--- Tabla Letrado
+-- Letrado
 CREATE TABLE letrado (
     letrado_id SERIAL PRIMARY KEY,
     nombre VARCHAR(200) NOT NULL,
@@ -65,27 +70,17 @@ CREATE TABLE letrado (
     telefono VARCHAR(50)
 );
 
--- Tabla Expediente (entidad principal)
+-- Expediente
 CREATE TABLE expediente (
     numero_expediente VARCHAR(50) PRIMARY KEY,
     caratula TEXT NOT NULL,
-    fecha_inicio DATE NOT NULL,
+    fecha_inicio DATE , -- no tenemos por ahora
     fecha_ultimo_movimiento DATE,
-    dias_transcurridos INTEGER GENERATED ALWAYS AS (
-        CURRENT_DATE - fecha_inicio
-    ) STORED,
-    dias_inactivos INTEGER GENERATED ALWAYS AS (
-        CASE 
-            WHEN fecha_ultimo_movimiento IS NULL THEN CURRENT_DATE - fecha_inicio
-            ELSE CURRENT_DATE - fecha_ultimo_movimiento
-        END
-    ) STORED,
-    fuero_id INTEGER NOT NULL,
-    tribunal_id INTEGER NOT NULL,
+    fuero_id INTEGER, --not null es provisorio
+    tribunal_id INTEGER,  --not null es provisorio
     secretaria_id INTEGER,
     estado_procesal_id INTEGER NOT NULL,
-    tipo_delito VARCHAR(50),
-    letrado_id INTEGER,
+    estado_solapa VARCHAR(50), -- "Terminadas" / "En trámite"
     
     CONSTRAINT fk_expediente_fuero 
         FOREIGN KEY (fuero_id) REFERENCES fuero(fuero_id)
@@ -98,42 +93,80 @@ CREATE TABLE expediente (
         ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT fk_expediente_estado_procesal 
         FOREIGN KEY (estado_procesal_id) REFERENCES estado_procesal(estado_procesal_id)
-        ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT fk_expediente_tipo_delito 
-        FOREIGN KEY (tipo_delito) REFERENCES tipo_delito(tipo)
-        ON DELETE SET NULL ON UPDATE CASCADE,
-    CONSTRAINT fk_expediente_letrado 
-        FOREIGN KEY (letrado_id) REFERENCES letrado(letrado_id)
-        ON DELETE SET NULL ON UPDATE CASCADE
+        ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
--- Tabla Parte (entidad débil relacionada con expediente)
+-- ============================================
+-- Entidades dependientes y relaciones N:M
+-- ============================================
+
+-- Parte (con surrogate key en vez de documento_cuit solo)
 CREATE TABLE parte (
-    documento_cuit VARCHAR(20) NOT NULL,
+    parte_id SERIAL PRIMARY KEY,
     numero_expediente VARCHAR(50) NOT NULL,
+    documento_cuit VARCHAR(20),
     tipo_persona VARCHAR(20) NOT NULL CHECK (tipo_persona IN ('fisica', 'juridica')),
     nombre_razon_social VARCHAR(200) NOT NULL,
     
-    PRIMARY KEY (documento_cuit, numero_expediente),
     CONSTRAINT fk_parte_expediente 
         FOREIGN KEY (numero_expediente) REFERENCES expediente(numero_expediente)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Tabla RolParte (relación muchos a muchos entre expediente y parte con atributos)
+-- Rol de la parte (ej: imputado, demandante, querellante)
 CREATE TABLE rol_parte (
-    numero_expediente VARCHAR(50) NOT NULL,
-    documento_cuit VARCHAR(20) NOT NULL,
+    rol_parte_id SERIAL PRIMARY KEY,
+    parte_id INTEGER NOT NULL,
     nombre VARCHAR(200) NOT NULL,
-    
-    PRIMARY KEY (numero_expediente, documento_cuit, nombre),
     CONSTRAINT fk_rol_parte_parte 
-        FOREIGN KEY (documento_cuit, numero_expediente) 
-        REFERENCES parte(documento_cuit, numero_expediente)
+        FOREIGN KEY (parte_id) REFERENCES parte(parte_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Tabla Plazo
+-- Relación N:M entre expediente y tipo de delito
+CREATE TABLE expediente_delito (
+    numero_expediente VARCHAR(50) NOT NULL,
+    tipo_delito VARCHAR(50) NOT NULL,
+    PRIMARY KEY (numero_expediente, tipo_delito),
+    CONSTRAINT fk_expediente_delito_exp FOREIGN KEY (numero_expediente)
+        REFERENCES expediente(numero_expediente)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_expediente_delito_tipo FOREIGN KEY (tipo_delito)
+        REFERENCES tipo_delito(tipo)
+        ON DELETE RESTRICT
+);
+
+-- Representación (qué letrado representa a qué parte en qué expediente)
+CREATE TABLE representacion (
+    numero_expediente VARCHAR(50) NOT NULL,
+    parte_id INTEGER NOT NULL,
+    letrado_id INTEGER NOT NULL,
+    rol VARCHAR(100), -- defensor, apoderado, patrocinante, etc.
+    PRIMARY KEY (numero_expediente, parte_id, letrado_id),
+    CONSTRAINT fk_repr_exp FOREIGN KEY (numero_expediente)
+        REFERENCES expediente(numero_expediente)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_repr_parte FOREIGN KEY (parte_id)
+        REFERENCES parte(parte_id)
+        ON DELETE CASCADE,
+    CONSTRAINT fk_repr_letrado FOREIGN KEY (letrado_id)
+        REFERENCES letrado(letrado_id)
+        ON DELETE CASCADE
+);
+
+-- Resoluciones (1:N con expediente)
+CREATE TABLE resolucion (
+    resolucion_id SERIAL PRIMARY KEY,
+    numero_expediente VARCHAR(50) NOT NULL,
+    texto TEXT NOT NULL,
+    fecha DATE,
+    fuente TEXT,
+    CONSTRAINT fk_resol_exp FOREIGN KEY (numero_expediente)
+        REFERENCES expediente(numero_expediente)
+        ON DELETE CASCADE
+);
+
+-- Plazos (1:N con expediente)
 CREATE TABLE plazo (
     plazo_id SERIAL PRIMARY KEY,
     numero_expediente VARCHAR(50) NOT NULL,
@@ -143,9 +176,6 @@ CREATE TABLE plazo (
     dias_habiles INTEGER,
     estado VARCHAR(20) DEFAULT 'vigente' CHECK (estado IN ('vigente', 'vencido', 'cumplido')),
     tolerancia_dias INTEGER DEFAULT 0,
-    dias_restantes INTEGER GENERATED ALWAYS AS (
-        fecha_vencimiento - CURRENT_DATE
-    ) STORED,
     
     CONSTRAINT fk_plazo_expediente 
         FOREIGN KEY (numero_expediente) REFERENCES expediente(numero_expediente)
@@ -153,7 +183,9 @@ CREATE TABLE plazo (
     CONSTRAINT chk_fechas_plazo CHECK (fecha_vencimiento >= fecha_inicio)
 );
 
--- Índices para mejorar el rendimiento
+-- ============================================
+-- Índices
+-- ============================================
 CREATE INDEX idx_expediente_fecha_inicio ON expediente(fecha_inicio);
 CREATE INDEX idx_expediente_fecha_ultimo_movimiento ON expediente(fecha_ultimo_movimiento);
 CREATE INDEX idx_expediente_fuero ON expediente(fuero_id);
@@ -164,13 +196,13 @@ CREATE INDEX idx_plazo_expediente ON plazo(numero_expediente);
 CREATE INDEX idx_plazo_vencimiento ON plazo(fecha_vencimiento);
 CREATE INDEX idx_tribunal_jurisdiccion ON tribunal(jurisdiccion_id);
 
+-- ============================================
 -- Comentarios para documentación
+-- ============================================
 COMMENT ON TABLE expediente IS 'Tabla principal que contiene la información de los expedientes judiciales';
-COMMENT ON COLUMN expediente.dias_transcurridos IS 'Días transcurridos desde el inicio del expediente (calculado automáticamente)';
-COMMENT ON COLUMN expediente.dias_inactivos IS 'Días sin movimiento en el expediente (calculado automáticamente)';
 COMMENT ON TABLE parte IS 'Personas físicas o jurídicas involucradas en un expediente';
+COMMENT ON TABLE rol_parte IS 'Roles específicos que una parte cumple en un expediente';
+COMMENT ON TABLE representacion IS 'Relación entre parte y letrado en un expediente';
+COMMENT ON TABLE expediente_delito IS 'Asociación N:M entre expedientes y delitos imputados';
+COMMENT ON TABLE resolucion IS 'Resoluciones dictadas en un expediente';
 COMMENT ON TABLE plazo IS 'Plazos procesales asociados a cada expediente';
-COMMENT ON COLUMN plazo.dias_restantes IS 'Días restantes hasta el vencimiento del plazo (calculado automáticamente)';
-
-
-
