@@ -123,38 +123,58 @@ async def scrape_tab(page, tab_selector, estado_label, container_selector, visto
         except Exception:
             break
 
-# === Guardado en DB ===
+
+# === Guardar en DB ===
 async def guardar_en_db(pool, resultados):
     async with pool.acquire() as conn:
         for r in resultados:
+            # === IDs base ===
             fuero_id = await obtener_o_crear_id(conn, "fuero", "nombre", "Desconocido")
-            jurisdiccion_id = await obtener_o_crear_id(conn, "jurisdiccion", "ambito", "Desconocido",
-                                                      {"provincia": "Desconocida", "departamento_judicial": "Desconocido"})
-            tribunal_id = await obtener_o_crear_id(conn, "tribunal", "nombre", "Desconocido", {"jurisdiccion_id": jurisdiccion_id})
-            secretaria_id = await obtener_o_crear_id(conn, "secretaria", "nombre", "Desconocido", {"tribunal_id": tribunal_id})
-            estado_procesal_id = await obtener_o_crear_id(conn, "estado_procesal", "nombre", r.get("Estado", "Desconocido"))
+            jurisdiccion_id = await obtener_o_crear_id(
+                conn, "jurisdiccion", "ambito", "Desconocido",
+                {"provincia": "Desconocida", "departamento_judicial": "Desconocido"}
+            )
+            tribunal_id = await obtener_o_crear_id(
+                conn, "tribunal", "nombre", "Desconocido",
+                {"jurisdiccion_id": jurisdiccion_id}
+            )
+            secretaria_id = await obtener_o_crear_id(
+                conn, "secretaria", "nombre", "Desconocido",
+                {"tribunal_id": tribunal_id}
+            )
+            estado_procesal_id = await obtener_o_crear_id(
+                conn, "estado_procesal", "nombre", r.get("Estado", "Desconocido")
+            )
 
-            # 1) Insertar expediente SIN tipo_delito
+            # === Parseo de fecha ===
+            fecha_ultimo_mov = None
+            if r.get("Última actualización"):
+                try:
+                    fecha_ultimo_mov = datetime.strptime(
+                        r["Última actualización"], "%d/%m/%Y"
+                    ).date()
+                except ValueError:
+                    fecha_ultimo_mov = None
+
+            # === Expediente ===
             await conn.execute("""
                 INSERT INTO expediente (numero_expediente, caratula, fecha_inicio, fecha_ultimo_movimiento,
                                         fuero_id, tribunal_id, secretaria_id, estado_procesal_id)
                 VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7)
                 ON CONFLICT (numero_expediente) DO NOTHING
-            """, r["Expediente"], r["Carátula"], r["Última actualización"] or None,
+            """, r["Expediente"], r["Carátula"], fecha_ultimo_mov,
                  fuero_id, tribunal_id, secretaria_id, estado_procesal_id)
 
-            # 2) Manejo de delitos (pueden venir múltiples separados por coma)
+            # === Delitos ===
             if r.get("Delitos"):
                 delitos = [d.strip() for d in r["Delitos"].split(",") if d.strip()]
                 for d in delitos:
-                    # Insertar en tipo_delito si no existe
                     await conn.execute("""
                         INSERT INTO tipo_delito (tipo)
                         VALUES ($1)
                         ON CONFLICT (tipo) DO NOTHING
                     """, d)
 
-                    # 3) Insertar relación expediente-delito
                     await conn.execute("""
                         INSERT INTO expediente_delito (numero_expediente, tipo_delito)
                         VALUES ($1, $2)
@@ -163,34 +183,45 @@ async def guardar_en_db(pool, resultados):
 
             # === Partes (imputados) ===
             for imp, letrados in r.get("__imputados__", []):
-                await conn.execute("""
-                    INSERT INTO parte (documento_cuit, numero_expediente, tipo_persona, nombre_razon_social)
-                    VALUES ($1, $2, 'fisica', $3)
-                    ON CONFLICT DO NOTHING
-                """, "CUIT_DESCONOCIDO", r["Expediente"], imp)
+                # Buscar parte existente
+                row = await conn.fetchrow("""
+                    SELECT parte_id FROM parte
+                    WHERE numero_expediente = $1 AND nombre_razon_social = $2
+                """, r["Expediente"], imp)
 
+                # Insertar si no existe
+                if not row:
+                    row = await conn.fetchrow("""
+                        INSERT INTO parte (documento_cuit, numero_expediente, tipo_persona, nombre_razon_social)
+                        VALUES ($1, $2, 'fisica', $3)
+                        RETURNING parte_id
+                    """, "CUIT_DESCONOCIDO", r["Expediente"], imp)
+
+                parte_id = row["parte_id"]
+
+                # Relacionar con letrados
                 for l in letrados:
                     letrado_id = await obtener_o_crear_id(conn, "letrado", "nombre", l)
-                    # Relacionar parte con letrado (si tenés tabla intermedia parte_letrado)
                     await conn.execute("""
                         INSERT INTO representacion (numero_expediente, parte_id, letrado_id, rol)
                         VALUES ($1, $2, $3, 'defensor')
                         ON CONFLICT DO NOTHING
                     """, r["Expediente"], parte_id, letrado_id)
 
-            # === Resoluciones (las guardamos como plazos por ahora) ===
+            # === Resoluciones (las guardamos como plazos) ===
             for res in r.get("__resoluciones__", []):
                 await conn.execute("""
                     INSERT INTO plazo (numero_expediente, tipo, fecha_inicio, fecha_vencimiento, dias_habiles, estado)
                     VALUES ($1, $2, CURRENT_DATE, CURRENT_DATE, 0, 'vigente')
                     ON CONFLICT DO NOTHING
-                """, r["Expediente"], res[:95])  # truncar por si es muy largo
+                """, r["Expediente"], res[:95])  # truncar si es muy largo
+
 
 # === Exportación a CSV ===
 def guardar_csv(resultados):
     # Expedientes
     fieldnames = ["Expediente", "Carátula", "Delitos", "Radicación del expediente", "Estado", "Última actualización", "EstadoSolapa"]
-    with open("5_expedientes.csv", "w", newline="", encoding="utf-8") as f:
+    with open("6_expedientes.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for r in resultados:
@@ -198,7 +229,7 @@ def guardar_csv(resultados):
             writer.writerow(fila)
 
     # Imputados
-    with open("5_imputados.csv", "w", newline="", encoding="utf-8") as f:
+    with open("6_imputados.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["Expediente", "EstadoSolapa", "Imputado"])
         for r in resultados:
@@ -206,7 +237,7 @@ def guardar_csv(resultados):
                 writer.writerow([r["Expediente"], r["EstadoSolapa"], imp])
 
     # Letrados
-    with open("5_letrados.csv", "w", newline="", encoding="utf-8") as f:
+    with open("6_letrados.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["Expediente", "EstadoSolapa", "Imputado", "Letrado"])
         for r in resultados:
@@ -215,7 +246,7 @@ def guardar_csv(resultados):
                     writer.writerow([r["Expediente"], r["EstadoSolapa"], imp, l])
 
     # Resoluciones
-    with open("5_resoluciones.csv", "w", newline="", encoding="utf-8") as f:
+    with open("6_resoluciones.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["Expediente", "EstadoSolapa", "Resolución"])
         for r in resultados:

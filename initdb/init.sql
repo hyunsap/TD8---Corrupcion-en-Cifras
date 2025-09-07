@@ -105,8 +105,8 @@ CREATE TABLE parte (
     parte_id SERIAL PRIMARY KEY,
     numero_expediente VARCHAR(50) NOT NULL,
     documento_cuit VARCHAR(20),
-    tipo_persona VARCHAR(20) NOT NULL CHECK (tipo_persona IN ('fisica', 'juridica')),
-    nombre_razon_social VARCHAR(200) NOT NULL,
+    tipo_persona VARCHAR(20) CHECK (tipo_persona IN ('fisica', 'juridica')), -- sacamos not null por ahora
+    nombre_razon_social VARCHAR(200), -- sacamos not null por ahora
     
     CONSTRAINT fk_parte_expediente 
         FOREIGN KEY (numero_expediente) REFERENCES expediente(numero_expediente)
