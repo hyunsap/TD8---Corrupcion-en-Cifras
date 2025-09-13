@@ -10,10 +10,6 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # === Helpers ===
 async def obtener_o_crear_id(conn, tabla, columna, valor, extra=None):
-    """
-    Devuelve el id de un valor existente o lo inserta si no existe.
-    extra = dict con otras columnas necesarias para INSERT.
-    """
     if valor is None or str(valor).strip() == "":
         valor = "Desconocido"
 
@@ -40,7 +36,7 @@ async def scrape_tab(page, tab_selector, estado_label, container_selector, visto
     print(f"Iniciando scraping de {estado_label}...")
 
     await page.click(tab_selector)
-    await page.wait_for_timeout(3000)  # esperar carga
+    await page.wait_for_timeout(2000)
     await page.wait_for_selector(f"{container_selector} div.result", timeout=10000)
 
     pagina = 1
@@ -49,31 +45,26 @@ async def scrape_tab(page, tab_selector, estado_label, container_selector, visto
 
         content = await page.content()
         soup = BeautifulSoup(content, "html.parser")
-
         bloques = soup.select(f"{container_selector} div.result")
 
         if not bloques:
-            print(f"No se encontraron más expedientes en {estado_label}.")
+            print(f"No se encontraron más expedientes en {estado_label}")
             break
-
-        print(f"Encontrados {len(bloques)} expedientes en página {pagina} ({estado_label})")
 
         for bloque in bloques:
             info_items = bloque.find("ul", class_="info")
             if not info_items:
                 continue
-
             info_items = info_items.find_all("li")
-            datos = {}
-            imputados = []
-            resoluciones = []
+
+            datos, imputados, resoluciones = {}, [], []
 
             # limpiar botones
             for item in info_items:
                 for btn in item.select("div.ver-todos, div.ver-menos, div.ver-todos-2, div.ver-menos-2"):
                     btn.decompose()
 
-            # parsear claves principales
+            # parsear claves
             for item in info_items:
                 etiqueta = item.find("span")
                 if not etiqueta:
@@ -81,10 +72,9 @@ async def scrape_tab(page, tab_selector, estado_label, container_selector, visto
                 clave = etiqueta.get_text(strip=True).replace(":", "")
                 if clave == "Carátula":
                     valor = "".join(item.find_all(string=True, recursive=False)).strip()
-                    datos[clave] = valor
                 else:
                     valor = item.get_text(strip=True).replace(etiqueta.get_text(strip=True), "").strip()
-                    datos[clave] = valor
+                datos[clave] = valor
 
             # radicación
             radicacion_div = bloque.select_one("div.item-especial-largo.soy-first-item-largo")
@@ -100,8 +90,7 @@ async def scrape_tab(page, tab_selector, estado_label, container_selector, visto
             # imputados y letrados
             panel_interv = bloque.select_one("div.ver-todos-panel")
             if panel_interv:
-                li_imputados = panel_interv.select("div.item-especial-largo-2 ul li")
-                for li in li_imputados:
+                for li in panel_interv.select("div.item-especial-largo-2 ul li"):
                     imputado_nombre = "".join(li.find_all(string=True, recursive=False)).strip()
                     letrados_imputado = [l.get_text(strip=True) for l in li.select("div.item")]
                     imputados.append((imputado_nombre, letrados_imputado))
@@ -109,17 +98,12 @@ async def scrape_tab(page, tab_selector, estado_label, container_selector, visto
             # resoluciones
             panel_res = bloque.select_one("li:has(span:contains('Resolución/es')) div.ver-todos-panel")
             if panel_res:
-                resol_items = panel_res.select("div.item")
-                for r in resol_items:
+                for r in panel_res.select("div.item"):
                     texto = r.get_text(strip=True)
                     if texto:
                         resoluciones.append(texto)
 
-            claves_interes = [
-                "Expediente", "Carátula", "Delitos",
-                "Radicación del expediente", "Estado",
-                "Última actualización"
-            ]
+            claves_interes = ["Expediente", "Carátula", "Delitos", "Radicación del expediente", "Estado", "Última actualización"]
             for clave in claves_interes:
                 datos.setdefault(clave, "")
 
@@ -135,49 +119,111 @@ async def scrape_tab(page, tab_selector, estado_label, container_selector, visto
         try:
             boton_siguiente = await page.query_selector(f"{container_selector} a.page-link:has-text('Siguiente')")
             if not boton_siguiente:
-                print(f"No hay más páginas en {estado_label}")
                 break
             await boton_siguiente.click()
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(2000)
             pagina += 1
-        except Exception as e:
-            print(f"Error al navegar en {estado_label}: {e}")
+        except Exception:
             break
 
     print(f"Completado {estado_label}. Páginas: {pagina}")
 
+# === Guardado en DB ===
+async def guardar_en_db(pool, resultados):
+    async with pool.acquire() as conn:
+        for r in resultados:
+            fuero_id = await obtener_o_crear_id(conn, "fuero", "nombre", "Desconocido")
+            jurisdiccion_id = await obtener_o_crear_id(
+                conn, "jurisdiccion", "ambito", "Desconocido",
+                {"provincia": "Desconocida", "departamento_judicial": "Desconocido"}
+            )
+            tribunal_id = await obtener_o_crear_id(
+                conn, "tribunal", "nombre", "Desconocido",
+                {"jurisdiccion_id": jurisdiccion_id}
+            )
+            secretaria_id = await obtener_o_crear_id(
+                conn, "secretaria", "nombre", "Desconocido",
+                {"tribunal_id": tribunal_id}
+            )
+            estado_procesal_id = await obtener_o_crear_id(
+                conn, "estado_procesal", "nombre", r.get("Estado", "Desconocido")
+            )
+
+            fecha_ultimo_mov = None
+            if r.get("Última actualización"):
+                try:
+                    fecha_ultimo_mov = datetime.strptime(r["Última actualización"], "%d/%m/%Y").date()
+                except ValueError:
+                    fecha_ultimo_mov = None
+
+            await conn.execute("""
+                INSERT INTO expediente (numero_expediente, caratula, fecha_inicio, fecha_ultimo_movimiento,
+                                        fuero_id, tribunal_id, secretaria_id, estado_procesal_id)
+                VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, $6, $7)
+                ON CONFLICT (numero_expediente) DO NOTHING
+            """, r["Expediente"], r["Carátula"], fecha_ultimo_mov,
+                 fuero_id, tribunal_id, secretaria_id, estado_procesal_id)
+
+            if r.get("Delitos"):
+                for d in [d.strip() for d in r["Delitos"].split(",") if d.strip()]:
+                    await conn.execute("INSERT INTO tipo_delito (tipo) VALUES ($1) ON CONFLICT (tipo) DO NOTHING", d)
+                    await conn.execute("""
+                        INSERT INTO expediente_delito (numero_expediente, tipo_delito)
+                        VALUES ($1, $2)
+                        ON CONFLICT DO NOTHING
+                    """, r["Expediente"], d)
+
+            for imp, letrados in r.get("__imputados__", []):
+                row = await conn.fetchrow("""
+                    SELECT parte_id FROM parte
+                    WHERE numero_expediente = $1 AND nombre_razon_social = $2
+                """, r["Expediente"], imp)
+                if not row:
+                    row = await conn.fetchrow("""
+                        INSERT INTO parte (documento_cuit, numero_expediente, tipo_persona, nombre_razon_social)
+                        VALUES ($1, $2, 'fisica', $3)
+                        RETURNING parte_id
+                    """, "CUIT_DESCONOCIDO", r["Expediente"], imp)
+                parte_id = row["parte_id"]
+
+                for l in letrados:
+                    letrado_id = await obtener_o_crear_id(conn, "letrado", "nombre", l)
+                    await conn.execute("""
+                        INSERT INTO representacion (numero_expediente, parte_id, letrado_id, rol)
+                        VALUES ($1, $2, $3, 'defensor')
+                        ON CONFLICT DO NOTHING
+                    """, r["Expediente"], parte_id, letrado_id)
+
+            for res in r.get("__resoluciones__", []):
+                await conn.execute("""
+                    INSERT INTO plazo (numero_expediente, tipo, fecha_inicio, fecha_vencimiento, dias_habiles, estado)
+                    VALUES ($1, $2, CURRENT_DATE, CURRENT_DATE, 0, 'vigente')
+                    ON CONFLICT DO NOTHING
+                """, r["Expediente"], res[:95])
+
 # === Guardado en CSV ===
 def guardar_csv(resultados):
-    # Expedientes
-    fieldnames = ["Expediente", "Carátula", "Delitos", "Radicación del expediente", "Estado", "Última actualización", "EstadoSolapa"]
-    with open("expedientes_fixed.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
+    with open("6_expedientes.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["Expediente", "Carátula", "Delitos", "Radicación del expediente", "Estado", "Última actualización", "EstadoSolapa"])
         writer.writeheader()
         for r in resultados:
-            fila = {k: r.get(k, "") for k in fieldnames}
-            writer.writerow(fila)
+            writer.writerow({k: r.get(k, "") for k in writer.fieldnames})
 
-    # Imputados
-    with open("imputados_fixed.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Expediente", "EstadoSolapa", "Imputado"])
+    with open("6_imputados.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f); writer.writerow(["Expediente", "EstadoSolapa", "Imputado"])
         for r in resultados:
             for (imp, _) in r.get("__imputados__", []):
                 writer.writerow([r["Expediente"], r["EstadoSolapa"], imp])
 
-    # Letrados
-    with open("letrados_fixed.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Expediente", "EstadoSolapa", "Imputado", "Letrado"])
+    with open("6_letrados.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f); writer.writerow(["Expediente", "EstadoSolapa", "Imputado", "Letrado"])
         for r in resultados:
             for (imp, letrs) in r.get("__imputados__", []):
                 for l in letrs:
                     writer.writerow([r["Expediente"], r["EstadoSolapa"], imp, l])
 
-    # Resoluciones
-    with open("resoluciones_fixed.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Expediente", "EstadoSolapa", "Resolución"])
+    with open("6_resoluciones.csv", "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f); writer.writerow(["Expediente", "EstadoSolapa", "Resolución"])
         for r in resultados:
             for res in r.get("__resoluciones__", []):
                 writer.writerow([r["Expediente"], r["EstadoSolapa"], res])
@@ -185,25 +231,23 @@ def guardar_csv(resultados):
 # === Run principal ===
 async def run():
     url = "https://www.csjn.gov.ar/tribunales-federales-nacionales/causas-de-corrupcion.html"
-    resultados = []
-    vistos = set()
+    resultados, vistos = [], set()
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto(url)
 
-        print("=== En trámite ===")
         await scrape_tab(page, "#btn-solapa-1", "En trámite", "#solapa-1", vistos, resultados)
-
-        print("=== Terminadas ===")
         await scrape_tab(page, "#btn-solapa-2", "Terminadas", "#solapa-2", vistos, resultados)
-
         await browser.close()
 
-    print(f"Total expedientes: {len(resultados)}")
+    pool = await asyncpg.create_pool(user="admin", password="td8corrupcion", database="corrupcion_db", host="localhost", port=5432)
+    await guardar_en_db(pool, resultados)
+    await pool.close()
+
     guardar_csv(resultados)
-    print("✅ Guardado en CSVs")
+    print("✅ Guardado en DB y CSV")
 
 if __name__ == "__main__":
     asyncio.run(run())
