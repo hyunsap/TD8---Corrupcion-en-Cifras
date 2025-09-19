@@ -127,7 +127,7 @@ def extraer_partes(caratula, numero_expediente):
 
 
 # === ETL Expedientes ===
-with open("4_expedientes.csv", newline="", encoding="utf-8") as f_in, \
+with open("4_1_expedientes.csv", newline="", encoding="utf-8") as f_in, \
      open("etl_expedientes.csv", "w", newline="", encoding="utf-8") as f_out:
 
     reader = csv.DictReader(f_in)
@@ -176,49 +176,53 @@ with open("4_expedientes.csv", newline="", encoding="utf-8") as f_in, \
 
 print("✅ Expedientes procesados → etl_expedientes.csv listo")
 
-# === ETL Partes (desde la carátula del expediente) ===
-with open("4_expedientes.csv", newline="", encoding="utf-8") as f_in, \
-     open("etl_partes.csv", "w", newline="", encoding="utf-8") as f_out:
-
+# === ETL Intervinientes ===
+with open("4_1_intervinientes.csv", newline="", encoding="utf-8") as f_in, \
+        open("etl_partes.csv", "w", newline="", encoding="utf-8") as f_out:
+        
     reader = csv.DictReader(f_in)
-    fieldnames = ["numero_expediente", "nombre", "rol"]
-    writer = csv.DictWriter(f_out, fieldnames=fieldnames)
-    writer.writeheader()
+    partes_seen = set()
+    fieldnames_partes = ["numero_expediente", "nombre", "rol"]
+    writer_partes = csv.DictWriter(f_out, fieldnames=fieldnames_partes)
+    writer_partes.writeheader()
 
     for row in reader:
-        numero = row["Expediente"]
-        caratula = row["Carátula"]
-        partes = extraer_partes(caratula, numero)
+            expediente = row["Expediente"].strip()
+            rol = row["Rol"].strip().lower()
+            nombre = row["Nombre"].strip().title()
+            if nombre:
+                key = (expediente, nombre, rol)
+                if key not in partes_seen:
+                    writer_partes.writerow({
+                        "numero_expediente": expediente,
+                        "nombre": nombre,
+                        "rol": rol
+                    })
+                    partes_seen.add(key)
 
-        if partes:
-            for p in partes:
-                writer.writerow(p)
-        else:
-            # fallback si no se detecta patrón
-            writer.writerow({
-                "numero_expediente": numero,
-                "nombre": caratula.strip(),
-                "rol": "interviniente"
-            })
-
-print("✅ Partes procesadas → etl_partes.csv listo")
-
-
-
-# === ETL Letrados ===
-with open("4_letrados.csv", newline="", encoding="utf-8") as f_in, \
-     open("etl_letrados.csv", "w", newline="", encoding="utf-8") as f_out:
-
+with open("4_1_intervinientes.csv", newline="", encoding="utf-8") as f_in, \
+        open("etl_letrados.csv", "w", newline="", encoding="utf-8") as f_out:
+        
     reader = csv.DictReader(f_in)
-    fieldnames = ["numero_expediente", "interviniente", "letrado"]
-    writer = csv.DictWriter(f_out, fieldnames=fieldnames)
-    writer.writeheader()
+    letrados_seen = set()
+    fieldnames_letrados = ["numero_expediente", "interviniente", "letrado"]
+    writer_letrados = csv.DictWriter(f_out, fieldnames=fieldnames_letrados)
+    writer_letrados.writeheader()
 
     for row in reader:
-        writer.writerow({
-            "numero_expediente": row["Expediente"],
-            "interviniente": row["Imputado"],
-            "letrado": row["Letrado"]
-        })
+        expediente = row["Expediente"].strip()
+        nombre = row["Nombre"].strip().title()
+        if nombre:
+            letrado = row["Letrado"].strip().title()
 
-print("✅ Letrados procesados → etl_letrados.csv listo")
+            if letrado:  # a veces puede venir vacío
+                key = (expediente, nombre, letrado)
+                if key not in letrados_seen:
+                    writer_letrados.writerow({
+                        "numero_expediente": expediente,
+                        "interviniente": nombre,
+                        "letrado": letrado
+                    })
+                    letrados_seen.add(key)
+
+print("✅ Intervinientes normalizados → etl_partes.csv y etl_letrados.csv listos")
