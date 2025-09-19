@@ -8,7 +8,7 @@ async def scrape_tab(page, tab_selector, estado_label, container_selector, visto
     await page.click(tab_selector)
     # Esperar a que cargue contenido en esa solapa
     await page.wait_for_selector(f"{container_selector} div.result")
-    await page.wait_for_timeout(1500)  # pequeño delay extra
+    await page.wait_for_timeout(2000)  # pequeño delay extra
 
     pagina = 1
     while True:
