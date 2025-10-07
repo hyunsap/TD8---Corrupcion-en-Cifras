@@ -1,5 +1,6 @@
 import csv
 import re
+from datetime import datetime
 
 # === Diccionarios de normalización ===
 CAMARAS = {
@@ -100,20 +101,14 @@ def desarmar_radicacion(radicacion):
 def extraer_partes(caratula, numero_expediente):
     """
     Extrae personas y su rol a partir de la carátula.
-    Roles detectados: imputado, denunciado, denunciante, querellante
-    Ignora 'otros', 'nn' y 'testigo de identidad reservada'.
     """
     partes = []
-
-    # Patrón para detectar rol: busca ROL: NOMBRES
     patron_roles = re.findall(r"(IMPUTADO|DENUNCIADO|DENUNCIANTE|QUERELLANTE):\s*(.*?)(?=(IMPUTADO|DENUNCIADO|DENUNCIANTE|QUERELLANTE|$))", caratula.upper(), re.DOTALL)
     
     for rol, bloque, _ in patron_roles:
-        # Separar nombres por " y " pero no por comas internas en apellidos
         nombres = re.split(r"\s+Y\s+", bloque)
         for nombre in nombres:
             nombre = nombre.strip()
-            # Filtrar nombres inválidos
             if not nombre or any(x in nombre.upper() for x in ["OTROS", "NN", "TESTIGO DE IDENTIDAD RESERVADA"]):
                 continue
             partes.append({
@@ -121,10 +116,16 @@ def extraer_partes(caratula, numero_expediente):
                 "nombre": nombre.title(),
                 "rol": rol.lower()
             })
-
     return partes
 
-
+def parse_date(fecha_str):
+    """Convierte fecha DD/MM/YYYY a YYYY-MM-DD, o devuelve '' si falla"""
+    if fecha_str:
+        try:
+            return datetime.strptime(fecha_str.strip(), "%d/%m/%Y").strftime("%Y-%m-%d")
+        except Exception:
+            return ""
+    return ""
 
 # === ETL Expedientes ===
 with open("4_1_expedientes.csv", newline="", encoding="utf-8") as f_in, \
@@ -165,8 +166,8 @@ with open("4_1_expedientes.csv", newline="", encoding="utf-8") as f_in, \
             "jurisdiccion": jurisdiccion,
             "tribunal": tribunal,
             "estado": row["Estado"],
-            "fecha_inicio": fecha_inicio,
-            "fecha_ultimo_movimiento": row["Última actualización"],
+            "fecha_inicio": parse_date(fecha_inicio),
+            "fecha_ultimo_movimiento": parse_date(row["Última actualización"]),
             "camara_origen": camara,
             "ano_inicio": ano_inicio,
             "delitos": row["Delitos"],
@@ -187,18 +188,18 @@ with open("4_1_intervinientes.csv", newline="", encoding="utf-8") as f_in, \
     writer_partes.writeheader()
 
     for row in reader:
-            expediente = row["Expediente"].strip()
-            rol = row["Rol"].strip().lower()
-            nombre = row["Nombre"].strip().title()
-            if nombre:
-                key = (expediente, nombre, rol)
-                if key not in partes_seen:
-                    writer_partes.writerow({
-                        "numero_expediente": expediente,
-                        "nombre": nombre,
-                        "rol": rol
-                    })
-                    partes_seen.add(key)
+        expediente = row["Expediente"].strip()
+        rol = row["Rol"].strip().lower()
+        nombre = row["Nombre"].strip().title()
+        if nombre:
+            key = (expediente, nombre, rol)
+            if key not in partes_seen:
+                writer_partes.writerow({
+                    "numero_expediente": expediente,
+                    "nombre": nombre,
+                    "rol": rol
+                })
+                partes_seen.add(key)
 
 with open("4_1_intervinientes.csv", newline="", encoding="utf-8") as f_in, \
         open("etl_letrados.csv", "w", newline="", encoding="utf-8") as f_out:
@@ -214,8 +215,7 @@ with open("4_1_intervinientes.csv", newline="", encoding="utf-8") as f_in, \
         nombre = row["Nombre"].strip().title()
         if nombre:
             letrado = row["Letrado"].strip().title()
-
-            if letrado:  # a veces puede venir vacío
+            if letrado:
                 key = (expediente, nombre, letrado)
                 if key not in letrados_seen:
                     writer_letrados.writerow({
@@ -226,3 +226,50 @@ with open("4_1_intervinientes.csv", newline="", encoding="utf-8") as f_in, \
                     letrados_seen.add(key)
 
 print("✅ Intervinientes normalizados → etl_partes.csv y etl_letrados.csv listos")
+
+# === ETL Resoluciones ===
+with open("4_1_resoluciones.csv", newline="", encoding="utf-8") as f_in, \
+     open("etl_resoluciones.csv", "w", newline="", encoding="utf-8") as f_out:
+
+    reader = csv.DictReader(f_in)
+    fieldnames_res = ["numero_expediente", "fecha", "nombre", "link"]
+    writer = csv.DictWriter(f_out, fieldnames=fieldnames_res)
+    writer.writeheader()
+
+    resoluciones_seen = set()
+
+    for row in reader:
+        expediente = row["Expediente"].strip()
+        fecha = parse_date(row["Fecha"].strip())
+        nombre = row["Nombre"].strip()
+        link = row["Link"].strip()
+
+        key = (expediente, fecha, nombre, link)
+        if key not in resoluciones_seen:
+            writer.writerow({
+                "numero_expediente": expediente,
+                "fecha": fecha,
+                "nombre": nombre,
+                "link": link
+            })
+            resoluciones_seen.add(key)
+
+print("✅ Resoluciones normalizadas → etl_resoluciones.csv listo")
+
+# === ETL Tribunales ===
+with open("etl_expedientes.csv", newline="", encoding="utf-8") as f_in, \
+     open("etl_tribunales.csv", "w", newline="", encoding="utf-8") as f_out:
+
+    reader = csv.DictReader(f_in)
+    writer = csv.DictWriter(f_out, fieldnames=["nombre", "fuero"])
+    writer.writeheader()
+
+    tribunales_seen = set()
+    for row in reader:
+        nombre = row["tribunal"].strip()
+        fuero = row["fuero"].strip()
+        if nombre and (nombre, fuero) not in tribunales_seen:
+            writer.writerow({"nombre": nombre, "fuero": fuero})
+            tribunales_seen.add((nombre, fuero))
+
+print("✅ Tribunales extraídos → etl_tribunales.csv listo")

@@ -1,209 +1,275 @@
-import asyncio
-from playwright.async_api import async_playwright
-from bs4 import BeautifulSoup
-import asyncpg
 import csv
-import warnings
-from datetime import datetime
+import re
 
-warnings.filterwarnings("ignore", category=FutureWarning)
+# === Diccionarios de normalización ===
+CAMARAS = {
+    "CFP": "Cámara Nacional de Apelaciones en lo Criminal y Correccional Federal",
+    "CCC": "Cámara Nacional de Apelaciones en lo Criminal y Correccional",
+    "CAF": "Cámara Nacional de Apelaciones en lo Contencioso Administrativo Federal",
+    "CPF": "Cámara Federal de Casación Penal",
+    "FRO": "Cámara Federal de Apelaciones de Rosario",
+    "CCF": "Cámara Nacional de Apelaciones en lo Civil y Comercial Federal",
+    "CIV": "Cámara Nacional de Apelaciones en lo Civil",
+    "FGR": "Cámara Federal de Apelaciones de General Roca",
+    "FPO": "Cámara Federal de Apelaciones de Posadas",
+    "FTU": "Cámara Federal de Apelaciones de Tucumán",
+    "FCB": "Cámara Federal de Apelaciones de Córdoba",
+    "FPA": "Cámara Federal de Apelaciones de Paraná",
+    "FSA": "Cámara Federal de Apelaciones de Salta",
+    "FBB": "Cámara Federal de Apelaciones de Bahía Blanca",
+    "FCT": "Cámara Federal de Apelaciones de Corrientes",
+    "FMZ": "Cámara Federal de Apelaciones de Mendoza",
+    "FCR": "Cámara Federal de Apelaciones de Comodoro Rivadavia",
+    "FSM": "Cámara Federal de Apelaciones de San Martín",
+    "FLP": "Cámara Federal de Apelaciones de La Plata",
+    "FMP": "Cámara Federal de Apelaciones de Mar del Plata",
+    "FRE": "Cámara Federal de Apelaciones de Resistencia",
+    "CSS": "Cámara Federal de la Seguridad Social",
+    "CPN": "Cámara Nacional de Casación Penal",
+    "CPE": "Cámara Nacional en lo Penal Económico",
+    "COM": "Cámara Nacional de Apelaciones en lo Comercial",
+    "CNE": "Cámara Nacional Electoral",
+    "CNT": "Cámara Nacional de Apelaciones del Trabajo",
+}
 
-# === Helpers ===
-async def obtener_o_crear_id(conn, tabla, columna, valor, extra=None):
+FUERO_POR_CAMARA = {
+    "CFP": "Penal Federal",
+    "CCC": "Penal Federal",
+    "CPF": "Penal Federal",
+    "FRO": "Penal Federal",
+    "FGR": "Penal Federal",
+    "FPO": "Penal Federal",
+    "FTU": "Penal Federal",
+    "FCB": "Penal Federal",
+    "FPA": "Penal Federal",
+    "FSA": "Penal Federal",
+    "FBB": "Penal Federal",
+    "FCT": "Penal Federal",
+    "FMZ": "Penal Federal",
+    "FCR": "Penal Federal",
+    "FSM": "Penal Federal",
+    "FLP": "Penal Federal",
+    "FMP": "Penal Federal",
+    "FRE": "Penal Federal",
+    "CSS": "Penal Federal",
+    "CPN": "Penal Federal",
+    "CPE": "Penal Federal",
+    "CCC": "Penal Federal",
+    "CCF": "Civil",
+    "CIV": "Civil",
+    "COM": "Comercial",
+    "CNT": "Laboral",
+    "CAF": "Contencioso Administrativo",
+    "CNE": "Electoral"
+}
+
+# === Funciones de normalización ===
+def inferir_fuero_por_camara(numero_expediente):
+    sigla = numero_expediente.split()[0].upper()
+    return FUERO_POR_CAMARA.get(sigla, "Desconocido")
+
+def inferir_jurisdiccion_por_radicacion(radicacion):
+    if "FEDERAL" in radicacion.upper():
+        return "Federal"
+    return "Nacional"
+
+def extraer_camara_y_ano(numero_expediente):
+    match = re.match(r"(\w+)\s+\d+/(\d{4})", numero_expediente)
+    if match:
+        sigla, ano = match.groups()
+        camara = CAMARAS.get(sigla, "Desconocida")
+        return camara, int(ano)
+    return "Desconocida", None
+
+def desarmar_radicacion(radicacion):
+    partes = [p.strip() for p in radicacion.split("|")]
+
+    fecha = partes[0] if len(partes) > 0 else ""
+    tribunal = partes[1] if len(partes) > 1 else ""
+    fiscal = ""
+    fiscalia = ""
+
+    for p in partes[2:]:
+        if p.upper().startswith("FISCAL:"):
+            fiscal = p.replace("Fiscal:", "").strip()
+        elif p.upper().startswith("FISCALIA"):
+            fiscalia = p.strip()
+
+    return fecha, tribunal, fiscal, fiscalia
+
+def extraer_partes(caratula, numero_expediente):
     """
-    Devuelve el id de un valor existente o lo inserta si no existe.
-    extra = dict con otras columnas necesarias para INSERT.
+    Extrae personas y su rol a partir de la carátula.
+    Roles detectados: imputado, denunciado, denunciante, querellante
+    Ignora 'otros', 'nn' y 'testigo de identidad reservada'.
     """
-    if valor is None or str(valor).strip() == "":
-        valor = "Desconocido"
+    partes = []
 
-    row = await conn.fetchrow(f"SELECT {tabla}_id FROM {tabla} WHERE {columna} = $1", valor)
-    if row:
-        return row[f"{tabla}_id"]
-
-    campos = [columna]
-    valores = [valor]
-    placeholders = ["$1"]
-
-    if extra:
-        for i, (k, v) in enumerate(extra.items(), start=2):
-            campos.append(k)
-            valores.append(v)
-            placeholders.append(f"${i}")
-
-    sql = f"INSERT INTO {tabla} ({', '.join(campos)}) VALUES ({', '.join(placeholders)}) RETURNING {tabla}_id"
-    row = await conn.fetchrow(sql, *valores)
-    return row[f"{tabla}_id"]
-
-# === Scraper con container_selector ===
-async def scrape_tab(page, tab_selector, estado_label, container_selector, vistos, resultados):
-    print(f"Iniciando scraping de {estado_label}...")
-
-    await page.click(tab_selector)
-    await page.wait_for_timeout(3000)  # esperar carga
-    await page.wait_for_selector(f"{container_selector} div.result", timeout=10000)
-
-    pagina = 1
-    while True:
-        print(f"Procesando página {pagina} ({estado_label})...")
-
-        content = await page.content()
-        soup = BeautifulSoup(content, "html.parser")
-
-        bloques = soup.select(f"{container_selector} div.result")
-
-        if not bloques:
-            print(f"No se encontraron más expedientes en {estado_label}.")
-            break
-
-        print(f"Encontrados {len(bloques)} expedientes en página {pagina} ({estado_label})")
-
-        for bloque in bloques:
-            info_items = bloque.find("ul", class_="info")
-            if not info_items:
+    # Patrón para detectar rol: busca ROL: NOMBRES
+    patron_roles = re.findall(r"(IMPUTADO|DENUNCIADO|DENUNCIANTE|QUERELLANTE):\s*(.*?)(?=(IMPUTADO|DENUNCIADO|DENUNCIANTE|QUERELLANTE|$))", caratula.upper(), re.DOTALL)
+    
+    for rol, bloque, _ in patron_roles:
+        # Separar nombres por " y " pero no por comas internas en apellidos
+        nombres = re.split(r"\s+Y\s+", bloque)
+        for nombre in nombres:
+            nombre = nombre.strip()
+            # Filtrar nombres inválidos
+            if not nombre or any(x in nombre.upper() for x in ["OTROS", "NN", "TESTIGO DE IDENTIDAD RESERVADA"]):
                 continue
+            partes.append({
+                "numero_expediente": numero_expediente,
+                "nombre": nombre.title(),
+                "rol": rol.lower()
+            })
 
-            info_items = info_items.find_all("li")
-            datos = {}
-            imputados = []
-            resoluciones = []
+    return partes
 
-            # limpiar botones
-            for item in info_items:
-                for btn in item.select("div.ver-todos, div.ver-menos, div.ver-todos-2, div.ver-menos-2"):
-                    btn.decompose()
 
-            # parsear claves principales
-            for item in info_items:
-                etiqueta = item.find("span")
-                if not etiqueta:
-                    continue
-                clave = etiqueta.get_text(strip=True).replace(":", "")
-                if clave == "Carátula":
-                    valor = "".join(item.find_all(string=True, recursive=False)).strip()
-                    datos[clave] = valor
-                else:
-                    valor = item.get_text(strip=True).replace(etiqueta.get_text(strip=True), "").strip()
-                    datos[clave] = valor
 
-            # radicación
-            radicacion_div = bloque.select_one("div.item-especial-largo.soy-first-item-largo")
-            if radicacion_div:
-                partes = [
-                    radicacion_div.select_one("div.t1a"),
-                    radicacion_div.select_one("div.t2a"),
-                    radicacion_div.select_one("div.t3a"),
-                    radicacion_div.select_one("div.t4a")
-                ]
-                datos["Radicación del expediente"] = " | ".join([p.get_text(strip=True) for p in partes if p])
+# === ETL Expedientes ===
+with open("4_1_expedientes.csv", newline="", encoding="utf-8") as f_in, \
+     open("etl_expedientes.csv", "w", newline="", encoding="utf-8") as f_out:
 
-            # imputados y letrados
-            panel_interv = bloque.select_one("div.ver-todos-panel")
-            if panel_interv:
-                li_imputados = panel_interv.select("div.item-especial-largo-2 ul li")
-                for li in li_imputados:
-                    imputado_nombre = "".join(li.find_all(string=True, recursive=False)).strip()
-                    letrados_imputado = [l.get_text(strip=True) for l in li.select("div.item")]
-                    imputados.append((imputado_nombre, letrados_imputado))
+    reader = csv.DictReader(f_in)
+    fieldnames = [
+        "numero_expediente",
+        "caratula",
+        "fuero",
+        "jurisdiccion",
+        "tribunal",
+        "estado",
+        "fecha_inicio",
+        "fecha_ultimo_movimiento",
+        "camara_origen",
+        "ano_inicio",
+        "delitos",
+        "fiscal",
+        "fiscalia"
+    ]
+    writer = csv.DictWriter(f_out, fieldnames=fieldnames)
+    writer.writeheader()
 
-            # resoluciones
-            panel_res = bloque.select_one("li:has(span:contains('Resolución/es')) div.ver-todos-panel")
-            if panel_res:
-                resol_items = panel_res.select("div.item")
-                for r in resol_items:
-                    texto = r.get_text(strip=True)
-                    if texto:
-                        resoluciones.append(texto)
+    for row in reader:
+        numero = row["Expediente"]
+        radicacion = row["Radicación del expediente"]
 
-            claves_interes = [
-                "Expediente", "Carátula", "Delitos",
-                "Radicación del expediente", "Estado",
-                "Última actualización"
-            ]
-            for clave in claves_interes:
-                datos.setdefault(clave, "")
+        fecha_inicio, tribunal, fiscal, fiscalia = desarmar_radicacion(radicacion)
+        camara, ano_inicio = extraer_camara_y_ano(numero)
+        fuero = inferir_fuero_por_camara(numero)
+        jurisdiccion = inferir_jurisdiccion_por_radicacion(radicacion)
 
-            identificador = datos.get("Expediente")
-            if identificador and (identificador, estado_label) not in vistos:
-                datos["__imputados__"] = imputados
-                datos["__resoluciones__"] = resoluciones
-                datos["EstadoSolapa"] = estado_label
-                resultados.append(datos)
-                vistos.add((identificador, estado_label))
+        writer.writerow({
+            "numero_expediente": numero,
+            "caratula": row["Carátula"],
+            "fuero": fuero,
+            "jurisdiccion": jurisdiccion,
+            "tribunal": tribunal,
+            "estado": row["Estado"],
+            "fecha_inicio": fecha_inicio,
+            "fecha_ultimo_movimiento": row["Última actualización"],
+            "camara_origen": camara,
+            "ano_inicio": ano_inicio,
+            "delitos": row["Delitos"],
+            "fiscal": fiscal,
+            "fiscalia": fiscalia
+        })
 
-        # siguiente página
-        try:
-            boton_siguiente = await page.query_selector(f"{container_selector} a.page-link:has-text('Siguiente')")
-            if not boton_siguiente:
-                print(f"No hay más páginas en {estado_label}")
-                break
-            await boton_siguiente.click()
-            await page.wait_for_timeout(3000)
-            pagina += 1
-        except Exception as e:
-            print(f"Error al navegar en {estado_label}: {e}")
-            break
+print("✅ Expedientes procesados → etl_expedientes.csv listo")
 
-    print(f"Completado {estado_label}. Páginas: {pagina}")
+# === ETL Intervinientes ===
+with open("4_1_intervinientes.csv", newline="", encoding="utf-8") as f_in, \
+        open("etl_partes.csv", "w", newline="", encoding="utf-8") as f_out:
+        
+    reader = csv.DictReader(f_in)
+    partes_seen = set()
+    fieldnames_partes = ["numero_expediente", "nombre", "rol"]
+    writer_partes = csv.DictWriter(f_out, fieldnames=fieldnames_partes)
+    writer_partes.writeheader()
 
-# === Guardado en CSV ===
-def guardar_csv(resultados):
-    # Expedientes
-    fieldnames = ["Expediente", "Carátula", "Delitos", "Radicación del expediente", "Estado", "Última actualización", "EstadoSolapa"]
-    with open("expedientes_fixed.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        for r in resultados:
-            fila = {k: r.get(k, "") for k in fieldnames}
-            writer.writerow(fila)
+    for row in reader:
+            expediente = row["Expediente"].strip()
+            rol = row["Rol"].strip().lower()
+            nombre = row["Nombre"].strip().title()
+            if nombre:
+                key = (expediente, nombre, rol)
+                if key not in partes_seen:
+                    writer_partes.writerow({
+                        "numero_expediente": expediente,
+                        "nombre": nombre,
+                        "rol": rol
+                    })
+                    partes_seen.add(key)
 
-    # Imputados
-    with open("imputados_fixed.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Expediente", "EstadoSolapa", "Imputado"])
-        for r in resultados:
-            for (imp, _) in r.get("__imputados__", []):
-                writer.writerow([r["Expediente"], r["EstadoSolapa"], imp])
+with open("4_1_intervinientes.csv", newline="", encoding="utf-8") as f_in, \
+        open("etl_letrados.csv", "w", newline="", encoding="utf-8") as f_out:
+        
+    reader = csv.DictReader(f_in)
+    letrados_seen = set()
+    fieldnames_letrados = ["numero_expediente", "interviniente", "letrado"]
+    writer_letrados = csv.DictWriter(f_out, fieldnames=fieldnames_letrados)
+    writer_letrados.writeheader()
 
-    # Letrados
-    with open("letrados_fixed.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Expediente", "EstadoSolapa", "Imputado", "Letrado"])
-        for r in resultados:
-            for (imp, letrs) in r.get("__imputados__", []):
-                for l in letrs:
-                    writer.writerow([r["Expediente"], r["EstadoSolapa"], imp, l])
+    for row in reader:
+        expediente = row["Expediente"].strip()
+        nombre = row["Nombre"].strip().title()
+        if nombre:
+            letrado = row["Letrado"].strip().title()
 
-    # Resoluciones
-    with open("resoluciones_fixed.csv", "w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Expediente", "EstadoSolapa", "Resolución"])
-        for r in resultados:
-            for res in r.get("__resoluciones__", []):
-                writer.writerow([r["Expediente"], r["EstadoSolapa"], res])
+            if letrado:  # a veces puede venir vacío
+                key = (expediente, nombre, letrado)
+                if key not in letrados_seen:
+                    writer_letrados.writerow({
+                        "numero_expediente": expediente,
+                        "interviniente": nombre,
+                        "letrado": letrado
+                    })
+                    letrados_seen.add(key)
 
-# === Run principal ===
-async def run():
-    url = "https://www.csjn.gov.ar/tribunales-federales-nacionales/causas-de-corrupcion.html"
-    resultados = []
-    vistos = set()
+print("✅ Intervinientes normalizados → etl_partes.csv y etl_letrados.csv listos")
 
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-        await page.goto(url)
+# === ETL Resoluciones ===
+with open("4_1_resoluciones.csv", newline="", encoding="utf-8") as f_in, \
+     open("etl_resoluciones.csv", "w", newline="", encoding="utf-8") as f_out:
 
-        print("=== En trámite ===")
-        await scrape_tab(page, "#btn-solapa-1", "En trámite", "#solapa-1", vistos, resultados)
+    reader = csv.DictReader(f_in)
+    fieldnames_res = ["numero_expediente", "fecha", "nombre", "link"]
+    writer = csv.DictWriter(f_out, fieldnames=fieldnames_res)
+    writer.writeheader()
 
-        print("=== Terminadas ===")
-        await scrape_tab(page, "#btn-solapa-2", "Terminadas", "#solapa-2", vistos, resultados)
+    resoluciones_seen = set()
 
-        await browser.close()
+    for row in reader:
+        expediente = row["Expediente"].strip()
+        fecha = row["Fecha"].strip()
+        nombre = row["Nombre"].strip()
+        link = row["Link"].strip()
 
-    print(f"Total expedientes: {len(resultados)}")
-    guardar_csv(resultados)
-    print("✅ Guardado en CSVs")
+        # Evitar duplicados
+        key = (expediente, fecha, nombre, link)
+        if key not in resoluciones_seen:
+            writer.writerow({
+                "numero_expediente": expediente,
+                "fecha": fecha,
+                "nombre": nombre,
+                "link": link
+            })
+            resoluciones_seen.add(key)
 
-if __name__ == "__main__":
-    asyncio.run(run())
+print("✅ Resoluciones normalizadas → etl_resoluciones.csv listo")
+
+# === ETL Tribunales ===
+with open("etl_expedientes.csv", newline="", encoding="utf-8") as f_in, \
+     open("etl_tribunales.csv", "w", newline="", encoding="utf-8") as f_out:
+
+    reader = csv.DictReader(f_in)
+    writer = csv.DictWriter(f_out, fieldnames=["nombre", "fuero"])
+    writer.writeheader()
+
+    tribunales_seen = set()
+    for row in reader:
+        nombre = row["tribunal"].strip()
+        fuero = row["fuero"].strip()
+        if nombre and (nombre, fuero) not in tribunales_seen:
+            writer.writerow({"nombre": nombre, "fuero": fuero})
+            tribunales_seen.add((nombre, fuero))
+print("✅ Tribunales extraídos → etl_tribunales.csv listo")
