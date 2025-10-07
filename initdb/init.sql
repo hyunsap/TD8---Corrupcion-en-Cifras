@@ -175,6 +175,44 @@ CREATE TABLE plazo (
 );
 
 -- ============================================
+-- Tabla de Jueces/Magistrados
+-- ============================================
+
+CREATE TABLE juez (
+    juez_id SERIAL PRIMARY KEY,
+    nombre VARCHAR(200) NOT NULL,
+    email VARCHAR(100),
+    telefono VARCHAR(50),
+    CONSTRAINT uq_juez_nombre UNIQUE (nombre)
+);
+
+-- ============================================
+-- Tabla intermedia: Relación Tribunal-Juez
+-- ============================================
+
+CREATE TABLE tribunal_juez (
+    tribunal_id INTEGER NOT NULL,
+    juez_id INTEGER NOT NULL,
+    cargo VARCHAR(100),
+    situacion VARCHAR(50) DEFAULT 'Efectivo' 
+        CHECK (situacion IN ('Efectivo', 'Subrogante', 'Interino', 'Suplente')),
+    fecha_desde DATE,
+    fecha_hasta DATE,
+    
+    PRIMARY KEY (tribunal_id, juez_id),
+    
+    CONSTRAINT fk_tribunal_juez_tribunal 
+        FOREIGN KEY (tribunal_id) REFERENCES tribunal(tribunal_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_tribunal_juez_juez 
+        FOREIGN KEY (juez_id) REFERENCES juez(juez_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT chk_fechas_tribunal_juez 
+        CHECK (fecha_hasta IS NULL OR fecha_hasta >= fecha_desde)
+);
+
+
+-- ============================================
 -- Índices
 -- ============================================
 CREATE INDEX idx_expediente_fecha_inicio ON expediente(fecha_inicio);
@@ -183,6 +221,10 @@ CREATE INDEX idx_parte_expediente ON parte(numero_expediente);
 CREATE INDEX idx_plazo_expediente ON plazo(numero_expediente);
 CREATE INDEX idx_plazo_vencimiento ON plazo(fecha_vencimiento);
 CREATE INDEX idx_tribunal_jurisdiccion ON tribunal(jurisdiccion_id);
+CREATE INDEX idx_tribunal_juez_tribunal ON tribunal_juez(tribunal_id);
+CREATE INDEX idx_tribunal_juez_juez ON tribunal_juez(juez_id);
+CREATE INDEX idx_tribunal_juez_cargo ON tribunal_juez(cargo);
+CREATE INDEX idx_juez_nombre ON juez(nombre);
 
 -- ============================================
 -- Comentarios
@@ -194,6 +236,12 @@ COMMENT ON TABLE representacion IS 'Relación entre parte y letrado en un expedi
 COMMENT ON TABLE expediente_delito IS 'Asociación N:M entre expedientes y delitos imputados';
 COMMENT ON TABLE resolucion IS 'Resoluciones dictadas en un expediente';
 COMMENT ON TABLE plazo IS 'Plazos procesales asociados a cada expediente';
+COMMENT ON TABLE juez IS 'Magistrados y jueces que integran tribunales';
+COMMENT ON TABLE tribunal_juez IS 'Relación N:M entre tribunales y jueces con información de cargo y situación';
+COMMENT ON COLUMN tribunal_juez.cargo IS 'Ej: Presidente, Vicepresidente, Juez de Cámara, Vocal, etc.';
+COMMENT ON COLUMN tribunal_juez.situacion IS 'Estado del juez en el tribunal: Efectivo, Subrogante, Interino, Suplente';
+COMMENT ON COLUMN tribunal_juez.fecha_desde IS 'Fecha de inicio en el cargo (opcional)';
+COMMENT ON COLUMN tribunal_juez.fecha_hasta IS 'Fecha de fin en el cargo (NULL si está activo)';
 
 -- ============================================
 -- Datos iniciales

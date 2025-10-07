@@ -13,133 +13,393 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor()
 
+print("=" * 60)
+print("🔌 Conectado a PostgreSQL: corrupcion_db")
+print("=" * 60)
+
+# ==============================
+# CARGA FUEROS
+# ==============================
+print("\n📥 Cargando fueros...")
+try:
+    with open("etl_fueros.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count = 0
+        for row in reader:
+            cur.execute("""
+                INSERT INTO fuero (fuero_id, nombre)
+                VALUES (%s, %s)
+                ON CONFLICT (nombre) DO UPDATE SET nombre = EXCLUDED.nombre;
+            """, (row["fuero_id"], row["nombre"]))
+            count += 1
+    conn.commit()
+    print(f"✅ {count} fueros cargados")
+except FileNotFoundError:
+    print("⚠️  Archivo etl_fueros.csv no encontrado, saltando...")
+except Exception as e:
+    print(f"❌ Error cargando fueros: {e}")
+    conn.rollback()
+
+# ==============================
+# CARGA JURISDICCIONES
+# ==============================
+print("\n📥 Cargando jurisdicciones...")
+try:
+    with open("etl_jurisdicciones.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count = 0
+        for row in reader:
+            cur.execute("""
+                INSERT INTO jurisdiccion (jurisdiccion_id, ambito, provincia, departamento_judicial)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (jurisdiccion_id) DO UPDATE SET
+                    ambito = EXCLUDED.ambito,
+                    provincia = EXCLUDED.provincia,
+                    departamento_judicial = EXCLUDED.departamento_judicial;
+            """, (
+                row["jurisdiccion_id"],
+                row["ambito"],
+                row["provincia"] if row["provincia"] else None,
+                row["departamento_judicial"] if row["departamento_judicial"] else None
+            ))
+            count += 1
+    conn.commit()
+    print(f"✅ {count} jurisdicciones cargadas")
+except FileNotFoundError:
+    print("⚠️  Archivo etl_jurisdicciones.csv no encontrado, saltando...")
+except Exception as e:
+    print(f"❌ Error cargando jurisdicciones: {e}")
+    conn.rollback()
+
+# ==============================
+# CARGA ESTADOS PROCESALES
+# ==============================
+print("\n📥 Creando estados procesales...")
+try:
+    estados = [
+        ('En trámite', 'Sustanciación'),
+        ('Terminadas', 'Finalizada'),
+        ('Archivado', 'Finalizada'),
+        ('Elevado', 'Sustanciación'),
+        ('Suspendido', 'Suspendida')
+    ]
+    count = 0
+    for nombre, etapa in estados:
+        cur.execute("""
+            INSERT INTO estado_procesal (nombre, etapa)
+            VALUES (%s, %s)
+            ON CONFLICT (nombre) DO NOTHING;
+        """, (nombre, etapa))
+        count += 1
+    conn.commit()
+    print(f"✅ {count} estados procesales verificados")
+except Exception as e:
+    print(f"❌ Error creando estados: {e}")
+    conn.rollback()
+
 # ==============================
 # CARGA TRIBUNALES
 # ==============================
-print("📥 Cargando tribunales...")
-with open("etl_tribunales.csv", newline="", encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        cur.execute("""
-            INSERT INTO tribunal (nombre, fuero, jurisdiccion_id)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (nombre) DO UPDATE SET fuero = EXCLUDED.fuero;
-        """, (row["nombre"], row["fuero"], 1))  # 👈 siempre jurisdicción Comodoro Py
-conn.commit()
-print("✅ Tribunales cargados en DB")
+print("\n📥 Cargando tribunales...")
+try:
+    with open("etl_tribunales.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count = 0
+        for row in reader:
+            # Buscar fuero_id
+            fuero_id = None
+            if row.get("fuero"):
+                cur.execute("SELECT fuero_id FROM fuero WHERE nombre = %s", (row["fuero"],))
+                res = cur.fetchone()
+                if res:
+                    fuero_id = res[0]
+            
+            cur.execute("""
+                INSERT INTO tribunal (tribunal_id, nombre, instancia, domicilio_sede, contacto, jurisdiccion_id)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (tribunal_id) DO UPDATE SET
+                    nombre = EXCLUDED.nombre,
+                    instancia = EXCLUDED.instancia,
+                    domicilio_sede = EXCLUDED.domicilio_sede,
+                    contacto = EXCLUDED.contacto,
+                    jurisdiccion_id = EXCLUDED.jurisdiccion_id;
+            """, (
+                row["tribunal_id"],
+                row["nombre"],
+                row["instancia"] if row.get("instancia") else None,
+                row["domicilio_sede"] if row.get("domicilio_sede") else None,
+                row["contacto"] if row.get("contacto") else None,
+                row["jurisdiccion_id"]
+            ))
+            count += 1
+    conn.commit()
+    print(f"✅ {count} tribunales cargados")
+except FileNotFoundError:
+    print("⚠️  Archivo etl_tribunales.csv no encontrado, saltando...")
+except Exception as e:
+    print(f"❌ Error cargando tribunales: {e}")
+    conn.rollback()
 
 # ==============================
 # CARGA EXPEDIENTES
 # ==============================
-print("📥 Cargando expedientes...")
-with open("etl_expedientes.csv", newline="", encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        id_tribunal = None
-        if row["tribunal"]:
-            cur.execute("SELECT tribunal_id FROM tribunal WHERE nombre = %s", (row["tribunal"],))
-            res = cur.fetchone()
-            if res:
-                id_tribunal = res[0]
-
-        cur.execute("""
-            INSERT INTO expediente (
-                numero_expediente, caratula, jurisdiccion,
-                tribunal, estado, fecha_inicio, fecha_ultimo_movimiento,
-                camara_origen, ano_inicio, delitos, fiscal, fiscalia, id_tribunal
-            )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-            ON CONFLICT (numero_expediente) DO NOTHING;
-        """, (
-            row["numero_expediente"],
-            row["caratula"],
-            row["jurisdiccion"],
-            row["tribunal"],
-            row["estado"],
-            row["fecha_inicio"] if row["fecha_inicio"] else None,
-            row["fecha_ultimo_movimiento"] if row["fecha_ultimo_movimiento"] else None,
-            row["camara_origen"],
-            row["ano_inicio"],
-            row["delitos"],
-            row["fiscal"],
-            row["fiscalia"],
-            id_tribunal
-        ))
-conn.commit()
-print("✅ Expedientes cargados en DB")
+print("\n📥 Cargando expedientes...")
+try:
+    with open("etl_expedientes.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count = 0
+        for row in reader:
+            # Buscar tribunal_id
+            tribunal_id = None
+            if row.get("tribunal"):
+                cur.execute("SELECT tribunal_id FROM tribunal WHERE nombre = %s", (row["tribunal"],))
+                res = cur.fetchone()
+                if res:
+                    tribunal_id = res[0]
+            
+            # Buscar fuero_id
+            fuero_id = None
+            if row.get("fuero"):
+                cur.execute("SELECT fuero_id FROM fuero WHERE nombre = %s", (row["fuero"],))
+                res = cur.fetchone()
+                if res:
+                    fuero_id = res[0]
+            
+            # Buscar estado_procesal_id
+            estado_procesal_id = 1  # Default
+            if row.get("estado"):
+                cur.execute("SELECT estado_procesal_id FROM estado_procesal WHERE nombre = %s", (row["estado"],))
+                res = cur.fetchone()
+                if res:
+                    estado_procesal_id = res[0]
+            
+            cur.execute("""
+                INSERT INTO expediente (
+                    numero_expediente, caratula, fecha_inicio, fecha_ultimo_movimiento,
+                    fuero_id, tribunal_id, estado_procesal_id, estado_solapa
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (numero_expediente) DO UPDATE SET
+                    caratula = EXCLUDED.caratula,
+                    fecha_ultimo_movimiento = EXCLUDED.fecha_ultimo_movimiento,
+                    tribunal_id = EXCLUDED.tribunal_id,
+                    estado_procesal_id = EXCLUDED.estado_procesal_id;
+            """, (
+                row["numero_expediente"],
+                row["caratula"],
+                row["fecha_inicio"] if row["fecha_inicio"] else None,
+                row["fecha_ultimo_movimiento"] if row["fecha_ultimo_movimiento"] else None,
+                fuero_id,
+                tribunal_id,
+                estado_procesal_id,
+                row["estado"]
+            ))
+            count += 1
+    conn.commit()
+    print(f"✅ {count} expedientes cargados")
+except FileNotFoundError:
+    print("⚠️  Archivo etl_expedientes.csv no encontrado")
+except Exception as e:
+    print(f"❌ Error cargando expedientes: {e}")
+    conn.rollback()
 
 # ==============================
 # CARGA PARTES
 # ==============================
-print("📥 Cargando partes...")
-with open("etl_partes.csv", newline="", encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        cur.execute("""
-            INSERT INTO parte (numero_expediente, nombre_razon_social)
-            VALUES (%s, %s)
-            ON CONFLICT DO NOTHING;
-        """, (row["numero_expediente"], row["nombre"]))
-
-        cur.execute("""
-            INSERT INTO rol_parte (parte_id, nombre)
-            SELECT parte_id, %s FROM parte WHERE numero_expediente = %s AND nombre_razon_social = %s
-            ON CONFLICT DO NOTHING;
-        """, (row["rol"], row["numero_expediente"], row["nombre"]))
-conn.commit()
-print("✅ Partes cargadas en DB")
+print("\n📥 Cargando partes e intervinientes...")
+try:
+    with open("etl_partes.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count_partes = 0
+        count_roles = 0
+        
+        for row in reader:
+            # Insertar parte
+            cur.execute("""
+                INSERT INTO parte (numero_expediente, nombre_razon_social, tipo_persona)
+                VALUES (%s, %s, %s)
+                ON CONFLICT DO NOTHING
+                RETURNING parte_id;
+            """, (row["numero_expediente"], row["nombre"], 'fisica'))
+            
+            res = cur.fetchone()
+            if res:
+                parte_id = res[0]
+                count_partes += 1
+            else:
+                # Si ya existe, buscar el parte_id
+                cur.execute("""
+                    SELECT parte_id FROM parte 
+                    WHERE numero_expediente = %s AND nombre_razon_social = %s;
+                """, (row["numero_expediente"], row["nombre"]))
+                res = cur.fetchone()
+                if res:
+                    parte_id = res[0]
+                else:
+                    continue
+            
+            # Insertar rol
+            cur.execute("""
+                INSERT INTO rol_parte (parte_id, nombre)
+                VALUES (%s, %s)
+                ON CONFLICT DO NOTHING;
+            """, (parte_id, row["rol"]))
+            count_roles += 1
+    
+    conn.commit()
+    print(f"✅ {count_partes} partes y {count_roles} roles cargados")
+except FileNotFoundError:
+    print("⚠️  Archivo etl_partes.csv no encontrado")
+except Exception as e:
+    print(f"❌ Error cargando partes: {e}")
+    conn.rollback()
 
 # ==============================
 # CARGA LETRADOS
 # ==============================
-print("📥 Cargando letrados...")
-with open("etl_letrados.csv", newline="", encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        cur.execute("""
-            INSERT INTO letrado (nombre)
-            VALUES (%s)
-            ON CONFLICT (nombre) DO NOTHING;
-        """, (row["letrado"],))
-
-        cur.execute("""
-            INSERT INTO representacion (numero_expediente, parte_id, letrado_id, rol)
-            SELECT %s, p.parte_id, l.letrado_id, NULL
-            FROM parte p, letrado l
-            WHERE p.numero_expediente = %s AND p.nombre_razon_social = %s AND l.nombre = %s
-            ON CONFLICT DO NOTHING;
-        """, (
-            row["numero_expediente"],
-            row["numero_expediente"],
-            row["interviniente"],
-            row["letrado"]
-        ))
-conn.commit()
-print("✅ Letrados cargados en DB")
+print("\n📥 Cargando letrados y representaciones...")
+try:
+    with open("etl_letrados.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count_letrados = 0
+        count_repr = 0
+        
+        for row in reader:
+            # Insertar letrado
+            cur.execute("""
+                INSERT INTO letrado (nombre)
+                VALUES (%s)
+                ON CONFLICT (nombre) DO NOTHING
+                RETURNING letrado_id;
+            """, (row["letrado"],))
+            
+            res = cur.fetchone()
+            if res:
+                count_letrados += 1
+            
+            # Buscar letrado_id
+            cur.execute("SELECT letrado_id FROM letrado WHERE nombre = %s", (row["letrado"],))
+            letrado_id = cur.fetchone()[0]
+            
+            # Buscar parte_id
+            cur.execute("""
+                SELECT parte_id FROM parte 
+                WHERE numero_expediente = %s AND nombre_razon_social = %s;
+            """, (row["numero_expediente"], row["interviniente"]))
+            
+            res = cur.fetchone()
+            if res:
+                parte_id = res[0]
+                
+                # Insertar representación
+                cur.execute("""
+                    INSERT INTO representacion (numero_expediente, parte_id, letrado_id, rol)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT DO NOTHING;
+                """, (row["numero_expediente"], parte_id, letrado_id, None))
+                count_repr += 1
+    
+    conn.commit()
+    print(f"✅ {count_letrados} letrados nuevos y {count_repr} representaciones cargadas")
+except FileNotFoundError:
+    print("⚠️  Archivo etl_letrados.csv no encontrado")
+except Exception as e:
+    print(f"❌ Error cargando letrados: {e}")
+    conn.rollback()
 
 # ==============================
 # CARGA RESOLUCIONES
 # ==============================
-print("📥 Cargando resoluciones...")
-with open("etl_resoluciones.csv", newline="", encoding="utf-8") as f:
-    reader = csv.DictReader(f)
-    for row in reader:
-        cur.execute("""
-            INSERT INTO resolucion (numero_expediente, fecha, nombre, link)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT DO NOTHING;
-        """, (
-            row["numero_expediente"],
-            row["fecha"] if row["fecha"] else None,
-            row["nombre"],
-            row["link"]
-        ))
-conn.commit()
-print("✅ Resoluciones cargadas en DB")
+print("\n📥 Cargando resoluciones...")
+try:
+    with open("etl_resoluciones.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count = 0
+        for row in reader:
+            cur.execute("""
+                INSERT INTO resolucion (numero_expediente, texto, fecha, fuente)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT DO NOTHING;
+            """, (
+                row["numero_expediente"],
+                row["nombre"],
+                row["fecha"] if row["fecha"] else None,
+                row["link"]
+            ))
+            count += 1
+    conn.commit()
+    print(f"✅ {count} resoluciones cargadas")
+except FileNotFoundError:
+    print("⚠️  Archivo etl_resoluciones.csv no encontrado")
+except Exception as e:
+    print(f"❌ Error cargando resoluciones: {e}")
+    conn.rollback()
+
+# ==============================
+# CARGA JUECES
+# ==============================
+print("\n📥 Cargando jueces...")
+try:
+    with open("etl_jueces.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count = 0
+        for row in reader:
+            cur.execute("""
+                INSERT INTO juez (juez_id, nombre, email, telefono)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (nombre) DO UPDATE SET
+                    email = COALESCE(EXCLUDED.email, juez.email),
+                    telefono = COALESCE(EXCLUDED.telefono, juez.telefono);
+            """, (
+                row["juez_id"],
+                row["nombre"],
+                row["email"] if row.get("email") else None,
+                row["telefono"] if row.get("telefono") else None
+            ))
+            count += 1
+    conn.commit()
+    print(f"✅ {count} jueces cargados")
+except FileNotFoundError:
+    print("⚠️  Archivo etl_jueces.csv no encontrado")
+except Exception as e:
+    print(f"❌ Error cargando jueces: {e}")
+    conn.rollback()
+
+# ==============================
+# CARGA RELACIÓN TRIBUNAL-JUEZ
+# ==============================
+print("\n📥 Cargando relaciones tribunal-juez...")
+try:
+    with open("etl_tribunal_juez.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count = 0
+        for row in reader:
+            cur.execute("""
+                INSERT INTO tribunal_juez (tribunal_id, juez_id, cargo, situacion)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (tribunal_id, juez_id) DO UPDATE SET
+                    cargo = EXCLUDED.cargo,
+                    situacion = EXCLUDED.situacion;
+            """, (
+                row["tribunal_id"],
+                row["juez_id"],
+                row["cargo"] if row.get("cargo") else None,
+                row["situacion"] if row.get("situacion") else 'Efectivo'
+            ))
+            count += 1
+    conn.commit()
+    print(f"✅ {count} relaciones tribunal-juez cargadas")
+except FileNotFoundError:
+    print("⚠️  Archivo etl_tribunal_juez.csv no encontrado")
+except Exception as e:
+    print(f"❌ Error cargando relaciones tribunal-juez: {e}")
+    conn.rollback()
 
 # ==============================
 # CIERRE
 # ==============================
 cur.close()
 conn.close()
-print("🎉 Carga completa finalizada")
+print("\n" + "=" * 60)
+print("🎉 CARGA COMPLETA FINALIZADA")
+print("=" * 60)
