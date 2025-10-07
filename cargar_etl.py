@@ -106,29 +106,25 @@ try:
         reader = csv.DictReader(f)
         count = 0
         for row in reader:
-            # Buscar fuero_id
-            fuero_id = None
-            if row.get("fuero"):
-                cur.execute("SELECT fuero_id FROM fuero WHERE nombre = %s", (row["fuero"],))
-                res = cur.fetchone()
-                if res:
-                    fuero_id = res[0]
-            
+            fuero = row.get("fuero") or "Desconocido"
+
             cur.execute("""
-                INSERT INTO tribunal (tribunal_id, nombre, instancia, domicilio_sede, contacto, jurisdiccion_id)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO tribunal (tribunal_id, nombre, instancia, domicilio_sede, contacto, fuero, jurisdiccion_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (tribunal_id) DO UPDATE SET
                     nombre = EXCLUDED.nombre,
                     instancia = EXCLUDED.instancia,
                     domicilio_sede = EXCLUDED.domicilio_sede,
                     contacto = EXCLUDED.contacto,
+                    fuero = EXCLUDED.fuero,
                     jurisdiccion_id = EXCLUDED.jurisdiccion_id;
             """, (
                 row["tribunal_id"],
                 row["nombre"],
-                row["instancia"] if row.get("instancia") else None,
-                row["domicilio_sede"] if row.get("domicilio_sede") else None,
-                row["contacto"] if row.get("contacto") else None,
+                row.get("instancia"),
+                row.get("domicilio_sede"),
+                row.get("contacto"),
+                fuero,
                 row["jurisdiccion_id"]
             ))
             count += 1
@@ -149,50 +145,40 @@ try:
         reader = csv.DictReader(f)
         count = 0
         for row in reader:
-            # Buscar tribunal_id
+            # Buscar tribunal_id (opcional)
             tribunal_id = None
             if row.get("tribunal"):
                 cur.execute("SELECT tribunal_id FROM tribunal WHERE nombre = %s", (row["tribunal"],))
                 res = cur.fetchone()
                 if res:
                     tribunal_id = res[0]
-            
-            # Buscar fuero_id
-            fuero_id = None
-            if row.get("fuero"):
-                cur.execute("SELECT fuero_id FROM fuero WHERE nombre = %s", (row["fuero"],))
-                res = cur.fetchone()
-                if res:
-                    fuero_id = res[0]
-            
-            # Buscar estado_procesal_id
-            estado_procesal_id = 1  # Default
-            if row.get("estado"):
-                cur.execute("SELECT estado_procesal_id FROM estado_procesal WHERE nombre = %s", (row["estado"],))
-                res = cur.fetchone()
-                if res:
-                    estado_procesal_id = res[0]
-            
+
             cur.execute("""
                 INSERT INTO expediente (
-                    numero_expediente, caratula, fecha_inicio, fecha_ultimo_movimiento,
-                    fuero_id, tribunal_id, estado_procesal_id, estado_solapa
+                    numero_expediente, caratula, jurisdiccion, tribunal, estado,
+                    fecha_inicio, fecha_ultimo_movimiento, camara_origen, ano_inicio,
+                    delitos, fiscal, fiscalia, id_tribunal
                 )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (numero_expediente) DO UPDATE SET
                     caratula = EXCLUDED.caratula,
                     fecha_ultimo_movimiento = EXCLUDED.fecha_ultimo_movimiento,
-                    tribunal_id = EXCLUDED.tribunal_id,
-                    estado_procesal_id = EXCLUDED.estado_procesal_id;
+                    estado = EXCLUDED.estado,
+                    tribunal = EXCLUDED.tribunal;
             """, (
                 row["numero_expediente"],
                 row["caratula"],
+                row["jurisdiccion"],
+                row["tribunal"],
+                row["estado"],
                 row["fecha_inicio"] if row["fecha_inicio"] else None,
                 row["fecha_ultimo_movimiento"] if row["fecha_ultimo_movimiento"] else None,
-                fuero_id,
-                tribunal_id,
-                estado_procesal_id,
-                row["estado"]
+                row["camara_origen"],
+                row["ano_inicio"],
+                row["delitos"],
+                row["fiscal"],
+                row["fiscalia"],
+                tribunal_id
             ))
             count += 1
     conn.commit()
@@ -214,7 +200,6 @@ try:
         count_roles = 0
         
         for row in reader:
-            # Insertar parte
             cur.execute("""
                 INSERT INTO parte (numero_expediente, nombre_razon_social, tipo_persona)
                 VALUES (%s, %s, %s)
@@ -227,7 +212,6 @@ try:
                 parte_id = res[0]
                 count_partes += 1
             else:
-                # Si ya existe, buscar el parte_id
                 cur.execute("""
                     SELECT parte_id FROM parte 
                     WHERE numero_expediente = %s AND nombre_razon_social = %s;
@@ -238,7 +222,6 @@ try:
                 else:
                     continue
             
-            # Insertar rol
             cur.execute("""
                 INSERT INTO rol_parte (parte_id, nombre)
                 VALUES (%s, %s)
@@ -265,7 +248,6 @@ try:
         count_repr = 0
         
         for row in reader:
-            # Insertar letrado
             cur.execute("""
                 INSERT INTO letrado (nombre)
                 VALUES (%s)
@@ -277,11 +259,9 @@ try:
             if res:
                 count_letrados += 1
             
-            # Buscar letrado_id
             cur.execute("SELECT letrado_id FROM letrado WHERE nombre = %s", (row["letrado"],))
             letrado_id = cur.fetchone()[0]
             
-            # Buscar parte_id
             cur.execute("""
                 SELECT parte_id FROM parte 
                 WHERE numero_expediente = %s AND nombre_razon_social = %s;
@@ -290,8 +270,6 @@ try:
             res = cur.fetchone()
             if res:
                 parte_id = res[0]
-                
-                # Insertar representación
                 cur.execute("""
                     INSERT INTO representacion (numero_expediente, parte_id, letrado_id, rol)
                     VALUES (%s, %s, %s, %s)
@@ -317,7 +295,7 @@ try:
         count = 0
         for row in reader:
             cur.execute("""
-                INSERT INTO resolucion (numero_expediente, texto, fecha, fuente)
+                INSERT INTO resolucion (numero_expediente, nombre, fecha, link)
                 VALUES (%s, %s, %s, %s)
                 ON CONFLICT DO NOTHING;
             """, (
@@ -353,8 +331,8 @@ try:
             """, (
                 row["juez_id"],
                 row["nombre"],
-                row["email"] if row.get("email") else None,
-                row["telefono"] if row.get("telefono") else None
+                row.get("email"),
+                row.get("telefono")
             ))
             count += 1
     conn.commit()
@@ -383,8 +361,8 @@ try:
             """, (
                 row["tribunal_id"],
                 row["juez_id"],
-                row["cargo"] if row.get("cargo") else None,
-                row["situacion"] if row.get("situacion") else 'Efectivo'
+                row.get("cargo"),
+                row.get("situacion") or 'Efectivo'
             ))
             count += 1
     conn.commit()
