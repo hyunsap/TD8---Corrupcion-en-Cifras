@@ -60,7 +60,7 @@ async def run():
                     ]
                     datos["Radicación del expediente"] = " | ".join([p.get_text(strip=True) for p in partes if p])
 
-                # Intervinientes (imputados, denunciados, denunciantes, querellantes)
+                # Intervinientes
                 panel_interv = bloque.select_one("div.ver-todos-panel")
                 if panel_interv:
                     secciones = panel_interv.select("div.item-especial-largo-2")
@@ -72,7 +72,6 @@ async def run():
                         participantes = []
 
                         for li in sec.select("ul li"):
-                            # Nombre = texto directo del <li> (sin spans/divs internos)
                             nombre_parts = [
                                 t.strip()
                                 for t in li.find_all(string=True, recursive=False)
@@ -80,7 +79,6 @@ async def run():
                             ]
                             nombre = " ".join(nombre_parts)
 
-                            # Buscar letrados dentro de div.ver-todos-panel-2
                             letrados_panel = li.select_one("div.ver-todos-panel-2")
                             letrados = []
                             if letrados_panel:
@@ -100,11 +98,23 @@ async def run():
                 # Resoluciones
                 panel_res = bloque.select_one("li:has(span:contains('Resolución/es')) div.ver-todos-panel")
                 if panel_res:
-                    resol_items = panel_res.select("div.item")
-                    for r in resol_items:
-                        texto = r.get_text(strip=True)
+                    resol_items = panel_res.select("div.item a")
+                    for a in resol_items:
+                        texto = a.get_text(strip=True)
+                        href = a.get("href", "").strip()
+
                         if texto:
-                            resoluciones.append(texto)
+                            if ":" in texto:
+                                fecha, nombre = texto.split(":", 1)
+                                fecha = fecha.strip()
+                                nombre = nombre.strip()
+                            else:
+                                fecha, nombre = "", texto
+                            resoluciones.append({
+                                "fecha": fecha,
+                                "nombre": nombre,
+                                "link": href
+                            })
 
                 # Asegurar claves
                 claves_interes = [
@@ -153,7 +163,7 @@ async def run():
                 fila = {k: r.get(k, "") for k in fieldnames}
                 writer.writerow(fila)
 
-        # Intervinientes unificados
+        # Intervinientes
         with open("4_1_intervinientes.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["Expediente", "Rol", "Nombre", "Letrado"])
@@ -169,10 +179,15 @@ async def run():
         # Resoluciones
         with open("4_1_resoluciones.csv", "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow(["Expediente", "Resolución"])
+            writer.writerow(["Expediente", "Fecha", "Nombre", "Link"])
             for r in resultados:
                 for res in r.get("__resoluciones__", []):
-                    writer.writerow([r["Expediente"], res])
+                    writer.writerow([
+                        r["Expediente"],
+                        res["fecha"],
+                        res["nombre"],
+                        res["link"]
+                    ])
 
     print("✅ Datos guardados en 4_1_expedientes.csv, 4_1_intervinientes.csv y 4_1_resoluciones.csv")
 
