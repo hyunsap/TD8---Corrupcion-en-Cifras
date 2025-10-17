@@ -1,130 +1,130 @@
 tribunal_id,juez_id,cargo,situacion
-30,1,Juez de Cámara de Casacion,Efectivo
-30,2,Juez de Cámara de Casacion,Efectivo
-30,3,Juez de Cámara de Casacion,Efectivo
-31,4,Prosecretario de Cámara,Efectivo
-32,2,Juez de Cámara de Casacion,Efectivo
-32,5,Juez de Cámara de Casacion,Efectivo
-32,1,Juez de Cámara de Casacion,Efectivo
-32,6,Secretario de Cámara,Efectivo
-33,7,Juez de Cámara de Casacion,Efectivo
-33,8,Juez de Cámara de Casacion,Efectivo
-33,3,Juez de Cámara de Casacion,Efectivo
-33,9,Secretario de Cámara,Efectivo
-34,10,Juez de Cámara de Casacion,Efectivo
-34,11,Juez de Cámara de Casacion,Efectivo
-34,12,Secretario de Cámara,Efectivo
-34,13,Juez de Cámara de Casacion,Efectivo
+31,1,Juez de Cámara de Casacion,Efectivo
+31,2,Juez de Cámara de Casacion,Efectivo
+31,3,Juez de Cámara de Casacion,Efectivo
+32,4,Prosecretario de Cámara,Efectivo
+33,2,Juez de Cámara de Casacion,Efectivo
+33,5,Juez de Cámara de Casacion,Efectivo
+33,1,Juez de Cámara de Casacion,Efectivo
+33,6,Secretario de Cámara,Efectivo
+34,7,Juez de Cámara de Casacion,Efectivo
+34,8,Juez de Cámara de Casacion,Efectivo
+34,3,Juez de Cámara de Casacion,Efectivo
+34,9,Secretario de Cámara,Efectivo
+35,10,Juez de Cámara de Casacion,Efectivo
+35,11,Juez de Cámara de Casacion,Efectivo
+35,12,Secretario de Cámara,Efectivo
 35,13,Juez de Cámara de Casacion,Efectivo
-35,14,Juez de Cámara de Casacion,Efectivo
-35,5,Juez de Cámara de Casacion,Efectivo
-35,15,Secretario de Cámara,Efectivo
-36,16,Juez de Cámara,Efectivo
-36,17,Juez de Cámara,Efectivo
-36,18,Juez de Cámara,Efectivo
-37,19,Juez de Cámara,Efectivo
-37,20,Juez de Cámara,Efectivo
+36,13,Juez de Cámara de Casacion,Efectivo
+36,14,Juez de Cámara de Casacion,Efectivo
+36,5,Juez de Cámara de Casacion,Efectivo
+36,15,Secretario de Cámara,Efectivo
 37,16,Juez de Cámara,Efectivo
-37,21,Secretario de Cámara,Efectivo
-37,22,Secretario de Cámara,Efectivo
-37,23,Prosecretario de Cámara,Interino
-38,18,Juez de Cámara,Efectivo
-38,24,Juez de Cámara,Efectivo
-38,17,Juez de Cámara,Efectivo
-39,25,Juez de 1ra. Instancia,Efectivo
-40,26,Secretario de Juzgado,Interino
-41,27,Secretario de Juzgado,Efectivo
-42,28,Juez de 1ra. Instancia,Efectivo
-43,29,Secretario de Juzgado,Efectivo
-44,30,Secretario de Juzgado,Efectivo
-45,31,Juez de 1ra. Instancia,Efectivo
-46,32,Secretario de Juzgado,Efectivo
-47,33,Secretario de Juzgado,Efectivo
-48,34,Juez de 1ra. Instancia,Efectivo
-49,35,Secretario,Efectivo
-50,36,Secretario,Efectivo
-51,37,Juez de 1ra. Instancia,Efectivo
-52,38,Juez de Cámara,Efectivo
-53,39,Secretario de Juzgado,Contratado
-55,40,Secretario de Juzgado,Efectivo
-55,41,Secretario de Juzgado,Efectivo
-56,42,Secretario de Juzgado,Efectivo
-57,43,Juez de 1ra. Instancia,Efectivo
-58,44,Secretario,Efectivo
-59,45,Secretario de Juzgado,Efectivo
-60,46,Juez de 1ra. Instancia,Efectivo
-61,47,Secretario,Efectivo
-62,48,Secretario,Efectivo
-63,49,Secretario de Juzgado,Efectivo
-64,50,Secretario de Juzgado,Efectivo
-65,51,Secretario de Juzgado,Efectivo
-65,52,Juez de Cámara,Efectivo
-66,53,Juez de 1ra. Instancia,Efectivo
-67,54,Secretario,Efectivo
-68,55,Secretario,Efectivo
-69,43,Juez de 1ra. Instancia,Efectivo
-70,56,Secretario de Juzgado,Efectivo
-71,57,Secretario de Juzgado,Contratado
-72,53,Juez de 1ra. Instancia,Efectivo
-73,58,Secretario de Juzgado,Efectivo
-74,59,Secretario de Juzgado,Efectivo
-75,60,Juez de Cámara,Efectivo
-75,61,Juez de Cámara,Efectivo
-75,62,Juez de Cámara,Efectivo
-75,63,Juez de Cámara,Efectivo
-75,64,Secretario de Cámara,Efectivo
-75,65,Secretario de Cámara,Efectivo
-75,66,Secretario,Efectivo
-75,67,Secretario,Efectivo
-76,68,Juez de Cámara,Efectivo
-76,69,Juez de Cámara,Subrogante
-76,70,Secretario,Efectivo
-77,71,Juez de Cámara,Efectivo
-77,72,Juez de Cámara,Efectivo
-77,73,Secretario de Juzgado,Efectivo
-77,74,Secretario de Cámara,Contratado
-77,75,Secretario,Contratado
-77,76,Secretario,Contratado
-77,77,Secretario,Efectivo
-78,78,Juez de Cámara,Efectivo
-78,79,Juez de Cámara,Efectivo
-78,61,Juez de Cámara,Efectivo
-78,80,Secretario de Cámara,Efectivo
-78,81,Secretario de Cámara,Efectivo
-78,82,Secretario de Cámara,Efectivo
-79,83,Juez de Cámara,Efectivo
-79,84,Juez de Cámara,Efectivo
-79,85,Juez de Cámara,Subrogante
-79,86,Secretario de Cámara,Efectivo
-79,87,Secretario de Cámara,Efectivo
-79,88,Secretario,Contratado
-79,89,Secretario de Juzgado,Efectivo
-79,90,Secretario,Efectivo
-79,91,Secretario,Efectivo
-79,92,Secretario de Juzgado,Efectivo
-79,93,Secretario de Juzgado,Efectivo
-79,94,Secretario de Juzgado,Efectivo
-79,95,Secretario de Juzgado,Contratado
+37,17,Juez de Cámara,Efectivo
+37,18,Juez de Cámara,Efectivo
+38,19,Juez de Cámara,Efectivo
+38,20,Juez de Cámara,Efectivo
+38,16,Juez de Cámara,Efectivo
+38,21,Secretario de Cámara,Efectivo
+38,22,Secretario de Cámara,Efectivo
+38,23,Prosecretario de Cámara,Interino
+39,18,Juez de Cámara,Efectivo
+39,24,Juez de Cámara,Efectivo
+39,17,Juez de Cámara,Efectivo
+40,25,Juez de 1ra. Instancia,Efectivo
+41,26,Secretario de Juzgado,Interino
+42,27,Secretario de Juzgado,Efectivo
+43,28,Juez de 1ra. Instancia,Efectivo
+44,29,Secretario de Juzgado,Efectivo
+45,30,Secretario de Juzgado,Efectivo
+46,31,Juez de 1ra. Instancia,Efectivo
+47,32,Secretario de Juzgado,Efectivo
+48,33,Secretario de Juzgado,Efectivo
+49,34,Juez de 1ra. Instancia,Efectivo
+50,35,Secretario,Efectivo
+51,36,Secretario,Efectivo
+52,37,Juez de 1ra. Instancia,Efectivo
+53,38,Juez de Cámara,Efectivo
+54,39,Secretario de Juzgado,Contratado
+56,40,Secretario de Juzgado,Efectivo
+56,41,Secretario de Juzgado,Efectivo
+57,42,Secretario de Juzgado,Efectivo
+58,43,Juez de 1ra. Instancia,Efectivo
+59,44,Secretario,Efectivo
+60,45,Secretario de Juzgado,Efectivo
+61,46,Juez de 1ra. Instancia,Efectivo
+62,47,Secretario,Efectivo
+63,48,Secretario,Efectivo
+64,49,Secretario de Juzgado,Efectivo
+65,50,Secretario de Juzgado,Efectivo
+66,51,Secretario de Juzgado,Efectivo
+66,52,Juez de Cámara,Efectivo
+67,53,Juez de 1ra. Instancia,Efectivo
+68,54,Secretario,Efectivo
+69,55,Secretario,Efectivo
+70,43,Juez de 1ra. Instancia,Efectivo
+71,56,Secretario de Juzgado,Efectivo
+72,57,Secretario de Juzgado,Contratado
+73,53,Juez de 1ra. Instancia,Efectivo
+74,58,Secretario de Juzgado,Efectivo
+75,59,Secretario de Juzgado,Efectivo
+76,60,Juez de Cámara,Efectivo
+76,61,Juez de Cámara,Efectivo
+76,62,Juez de Cámara,Efectivo
+76,63,Juez de Cámara,Efectivo
+76,64,Secretario de Cámara,Efectivo
+76,65,Secretario de Cámara,Efectivo
+76,66,Secretario,Efectivo
+76,67,Secretario,Efectivo
+77,68,Juez de Cámara,Efectivo
+77,69,Juez de Cámara,Subrogante
+77,70,Secretario,Efectivo
+78,71,Juez de Cámara,Efectivo
+78,72,Juez de Cámara,Efectivo
+78,73,Secretario de Juzgado,Efectivo
+78,74,Secretario de Cámara,Contratado
+78,75,Secretario,Contratado
+78,76,Secretario,Contratado
+78,77,Secretario,Efectivo
+79,78,Juez de Cámara,Efectivo
+79,79,Juez de Cámara,Efectivo
+79,61,Juez de Cámara,Efectivo
+79,80,Secretario de Cámara,Efectivo
+79,81,Secretario de Cámara,Efectivo
+79,82,Secretario de Cámara,Efectivo
+80,83,Juez de Cámara,Efectivo
 80,84,Juez de Cámara,Efectivo
-80,62,Juez de Cámara,Efectivo
-80,96,Juez de Cámara,Subrogante
-80,97,Secretario de Cámara,Contratado
-80,98,Secretario de Juzgado,Subrogante
-80,99,Secretario de Juzgado,Efectivo
-80,100,Secretario de Juzgado,Efectivo
-80,101,Secretario de Juzgado,Efectivo
-80,102,Secretario de Juzgado,Efectivo
-80,103,Secretario de Juzgado,Efectivo
-81,104,Juez de Cámara,Efectivo
-81,79,Juez de Cámara,Efectivo
-81,105,Juez de Cámara,Efectivo
-81,106,Secretario de Cámara,Efectivo
-81,107,Secretario de Juzgado,Efectivo
-81,108,Secretario de Juzgado,Contratado
-81,109,Secretario,Contratado
-81,110,Secretario de Juzgado,Interino
-82,111,Juez de Cámara,Subrogante
-82,112,Juez de Cámara,Efectivo
-82,113,Juez de Cámara,Efectivo
-82,114,Secretario de Cámara,Efectivo
-82,115,Juez de Cámara,Efectivo
+80,85,Juez de Cámara,Subrogante
+80,86,Secretario de Cámara,Efectivo
+80,87,Secretario de Cámara,Efectivo
+80,88,Secretario,Contratado
+80,89,Secretario de Juzgado,Efectivo
+80,90,Secretario,Efectivo
+80,91,Secretario,Efectivo
+80,92,Secretario de Juzgado,Efectivo
+80,93,Secretario de Juzgado,Efectivo
+80,94,Secretario de Juzgado,Efectivo
+80,95,Secretario de Juzgado,Contratado
+81,84,Juez de Cámara,Efectivo
+81,62,Juez de Cámara,Efectivo
+81,96,Juez de Cámara,Subrogante
+81,97,Secretario de Cámara,Contratado
+81,98,Secretario de Juzgado,Subrogante
+81,99,Secretario de Juzgado,Efectivo
+81,100,Secretario de Juzgado,Efectivo
+81,101,Secretario de Juzgado,Efectivo
+81,102,Secretario de Juzgado,Efectivo
+81,103,Secretario de Juzgado,Efectivo
+82,104,Juez de Cámara,Efectivo
+82,79,Juez de Cámara,Efectivo
+82,105,Juez de Cámara,Efectivo
+82,106,Secretario de Cámara,Efectivo
+82,107,Secretario de Juzgado,Efectivo
+82,108,Secretario de Juzgado,Contratado
+82,109,Secretario,Contratado
+82,110,Secretario de Juzgado,Interino
+83,111,Juez de Cámara,Subrogante
+83,112,Juez de Cámara,Efectivo
+83,113,Juez de Cámara,Efectivo
+83,114,Secretario de Cámara,Efectivo
+83,115,Juez de Cámara,Efectivo
