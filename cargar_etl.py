@@ -314,6 +314,47 @@ except Exception as e:
     conn.rollback()
 
 # ==============================
+# CARGA RADICACIONES (NUEVO)
+# ==============================
+print("\n📥 Cargando radicaciones...")
+try:
+    with open("etl_radicaciones.csv", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        count = 0
+        for row in reader:
+            cur.execute("""
+                INSERT INTO radicacion (
+                    numero_expediente, 
+                    orden, 
+                    fecha_radicacion, 
+                    tribunal, 
+                    fiscal_nombre, 
+                    fiscalia
+                )
+                VALUES (%s, %s, %s, %s, %s, %s)
+                ON CONFLICT (numero_expediente, orden) DO UPDATE SET
+                    fecha_radicacion = EXCLUDED.fecha_radicacion,
+                    tribunal = EXCLUDED.tribunal,
+                    fiscal_nombre = EXCLUDED.fiscal_nombre,
+                    fiscalia = EXCLUDED.fiscalia;
+            """, (
+                row["numero_expediente"],
+                int(row["orden"]) if row["orden"] else None,
+                row["fecha_radicacion"] if row["fecha_radicacion"] else None,
+                row["tribunal"],
+                row["fiscal_nombre"],
+                row["fiscalia"]
+            ))
+            count += 1
+    conn.commit()
+    print(f"✅ {count} radicaciones cargadas")
+except FileNotFoundError:
+    print("⚠️  Archivo etl_radicaciones.csv no encontrado")
+except Exception as e:
+    print(f"❌ Error cargando radicaciones: {e}")
+    conn.rollback()
+
+# ==============================
 # CARGA JUECES
 # ==============================
 print("\n📥 Cargando jueces...")
@@ -380,4 +421,17 @@ cur.close()
 conn.close()
 print("\n" + "=" * 60)
 print("🎉 CARGA COMPLETA FINALIZADA")
+print("=" * 60)
+print("\n📊 Tablas cargadas:")
+print("   • Fueros")
+print("   • Jurisdicciones")
+print("   • Estados Procesales")
+print("   • Tribunales")
+print("   • Expedientes")
+print("   • Partes e Intervinientes")
+print("   • Letrados y Representaciones")
+print("   • Resoluciones")
+print("   • Radicaciones ← NUEVO")
+print("   • Jueces")
+print("   • Relaciones Tribunal-Juez")
 print("=" * 60)

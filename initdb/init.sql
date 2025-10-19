@@ -101,6 +101,26 @@ CREATE TABLE resolucion (
     link TEXT
 );
 
+-- ==============================
+-- TABLA RADICACION (NUEVO)
+-- ==============================
+CREATE TABLE radicacion (
+    radicacion_id SERIAL PRIMARY KEY,
+    numero_expediente VARCHAR(50) NOT NULL,
+    orden INTEGER NOT NULL,
+    fecha_radicacion DATE,
+    tribunal TEXT,
+    fiscal_nombre TEXT,
+    fiscalia TEXT,
+    CONSTRAINT fk_radicacion_expediente 
+        FOREIGN KEY (numero_expediente) REFERENCES expediente(numero_expediente)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT uq_radicacion_expediente_orden 
+        UNIQUE (numero_expediente, orden),
+    CONSTRAINT chk_orden_positivo 
+        CHECK (orden > 0)
+);
+
 -- ============================================
 -- Entidades dependientes y relaciones N:M
 -- ============================================
@@ -211,7 +231,6 @@ CREATE TABLE tribunal_juez (
         CHECK (fecha_hasta IS NULL OR fecha_hasta >= fecha_desde)
 );
 
-
 -- ============================================
 -- Índices
 -- ============================================
@@ -226,6 +245,11 @@ CREATE INDEX idx_tribunal_juez_juez ON tribunal_juez(juez_id);
 CREATE INDEX idx_tribunal_juez_cargo ON tribunal_juez(cargo);
 CREATE INDEX idx_juez_nombre ON juez(nombre);
 
+-- Índices para radicaciones
+CREATE INDEX idx_radicacion_expediente ON radicacion(numero_expediente);
+CREATE INDEX idx_radicacion_orden ON radicacion(numero_expediente, orden);
+CREATE INDEX idx_radicacion_fecha ON radicacion(fecha_radicacion);
+
 -- ============================================
 -- Comentarios
 -- ============================================
@@ -235,9 +259,16 @@ COMMENT ON TABLE rol_parte IS 'Roles específicos que una parte cumple en un exp
 COMMENT ON TABLE representacion IS 'Relación entre parte y letrado en un expediente';
 COMMENT ON TABLE expediente_delito IS 'Asociación N:M entre expedientes y delitos imputados';
 COMMENT ON TABLE resolucion IS 'Resoluciones dictadas en un expediente';
+COMMENT ON TABLE radicacion IS 'Historial de radicaciones de cada expediente (movimientos entre tribunales)';
 COMMENT ON TABLE plazo IS 'Plazos procesales asociados a cada expediente';
 COMMENT ON TABLE juez IS 'Magistrados y jueces que integran tribunales';
 COMMENT ON TABLE tribunal_juez IS 'Relación N:M entre tribunales y jueces con información de cargo y situación';
+
+COMMENT ON COLUMN radicacion.orden IS 'Orden cronológico: 1 = más reciente, 2 = anterior, etc.';
+COMMENT ON COLUMN radicacion.fecha_radicacion IS 'Fecha en que el expediente se radicó en ese tribunal';
+COMMENT ON COLUMN radicacion.tribunal IS 'Nombre del tribunal/juzgado donde radicó';
+COMMENT ON COLUMN radicacion.fiscal_nombre IS 'Nombre del fiscal asignado';
+COMMENT ON COLUMN radicacion.fiscalia IS 'Fiscalía correspondiente';
 COMMENT ON COLUMN tribunal_juez.cargo IS 'Ej: Presidente, Vicepresidente, Juez de Cámara, Vocal, etc.';
 COMMENT ON COLUMN tribunal_juez.situacion IS 'Estado del juez en el tribunal: Efectivo, Subrogante, Interino, Suplente';
 COMMENT ON COLUMN tribunal_juez.fecha_desde IS 'Fecha de inicio en el cargo (opcional)';
