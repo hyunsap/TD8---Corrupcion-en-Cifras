@@ -79,7 +79,7 @@ CREATE TABLE expediente (
     caratula TEXT,
     jurisdiccion TEXT,
     tribunal TEXT, -- redundancia textual
-    estado TEXT,
+    estado_procesal_id INTEGER REFERENCES estado_procesal(estado_procesal_id) ON DELETE SET NULL,
     fecha_inicio DATE,
     fecha_ultimo_movimiento DATE,
     camara_origen TEXT,
@@ -102,7 +102,7 @@ CREATE TABLE resolucion (
 );
 
 -- ==============================
--- TABLA RADICACION (NUEVO)
+-- TABLA RADICACION
 -- ==============================
 CREATE TABLE radicacion (
     radicacion_id SERIAL PRIMARY KEY,
@@ -244,8 +244,6 @@ CREATE INDEX idx_tribunal_juez_tribunal ON tribunal_juez(tribunal_id);
 CREATE INDEX idx_tribunal_juez_juez ON tribunal_juez(juez_id);
 CREATE INDEX idx_tribunal_juez_cargo ON tribunal_juez(cargo);
 CREATE INDEX idx_juez_nombre ON juez(nombre);
-
--- Índices para radicaciones
 CREATE INDEX idx_radicacion_expediente ON radicacion(numero_expediente);
 CREATE INDEX idx_radicacion_orden ON radicacion(numero_expediente, orden);
 CREATE INDEX idx_radicacion_fecha ON radicacion(fecha_radicacion);
@@ -254,6 +252,7 @@ CREATE INDEX idx_radicacion_fecha ON radicacion(fecha_radicacion);
 -- Comentarios
 -- ============================================
 COMMENT ON TABLE expediente IS 'Tabla principal que contiene la información de los expedientes judiciales';
+COMMENT ON COLUMN expediente.estado_procesal_id IS 'Referencia al estado procesal (En trámite / Terminada)';
 COMMENT ON TABLE parte IS 'Personas físicas o jurídicas involucradas en un expediente';
 COMMENT ON TABLE rol_parte IS 'Roles específicos que una parte cumple en un expediente';
 COMMENT ON TABLE representacion IS 'Relación entre parte y letrado en un expediente';
@@ -264,20 +263,16 @@ COMMENT ON TABLE plazo IS 'Plazos procesales asociados a cada expediente';
 COMMENT ON TABLE juez IS 'Magistrados y jueces que integran tribunales';
 COMMENT ON TABLE tribunal_juez IS 'Relación N:M entre tribunales y jueces con información de cargo y situación';
 
-COMMENT ON COLUMN radicacion.orden IS 'Orden cronológico: 1 = más reciente, 2 = anterior, etc.';
-COMMENT ON COLUMN radicacion.fecha_radicacion IS 'Fecha en que el expediente se radicó en ese tribunal';
-COMMENT ON COLUMN radicacion.tribunal IS 'Nombre del tribunal/juzgado donde radicó';
-COMMENT ON COLUMN radicacion.fiscal_nombre IS 'Nombre del fiscal asignado';
-COMMENT ON COLUMN radicacion.fiscalia IS 'Fiscalía correspondiente';
-COMMENT ON COLUMN tribunal_juez.cargo IS 'Ej: Presidente, Vicepresidente, Juez de Cámara, Vocal, etc.';
-COMMENT ON COLUMN tribunal_juez.situacion IS 'Estado del juez en el tribunal: Efectivo, Subrogante, Interino, Suplente';
-COMMENT ON COLUMN tribunal_juez.fecha_desde IS 'Fecha de inicio en el cargo (opcional)';
-COMMENT ON COLUMN tribunal_juez.fecha_hasta IS 'Fecha de fin en el cargo (NULL si está activo)';
-
 -- ============================================
 -- Datos iniciales
 -- ============================================
--- Insertar jurisdicción base: Comodoro Py
 INSERT INTO jurisdiccion (jurisdiccion_id, ambito, provincia, departamento_judicial)
 VALUES (1, 'Federal', 'Ciudad Autónoma de Buenos Aires', 'Comodoro Py')
 ON CONFLICT (jurisdiccion_id) DO NOTHING;
+
+-- Estados procesales base
+INSERT INTO estado_procesal (estado_procesal_id, nombre, etapa)
+VALUES 
+    (1, 'En trámite', 'Investigación preliminar'),
+    (2, 'Terminada', 'Juicio / Sentencia')
+ON CONFLICT (estado_procesal_id) DO NOTHING;
