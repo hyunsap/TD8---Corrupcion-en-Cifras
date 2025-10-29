@@ -1,96 +1,118 @@
 tribunal_id,nombre,instancia,domicilio_sede,contacto,jurisdiccion_id,fuero
 1,CAMARA CRIMINAL Y CORRECCIONAL FEDERAL - SALA 1,Primera Instancia,,,1,Penal Federal
 2,CAMARA CRIMINAL Y CORRECCIONAL FEDERAL - SALA 2,Primera Instancia,,,1,Penal Federal
-3,CAMARA FEDERAL DE CASACION PENAL - SALA 1,Primera Instancia,,,1,Penal Federal
-4,CAMARA FEDERAL DE CASACION PENAL - SALA 2,Primera Instancia,,,1,Penal Federal
-5,CAMARA FEDERAL DE CASACION PENAL - SALA 3,Primera Instancia,,,1,Penal Federal
-6,CAMARA FEDERAL DE CASACION PENAL - SALA 4,Primera Instancia,,,1,Penal Federal
-7,CAMARA FEDERAL DE CASACION PENAL - SALA DE FERIA,Primera Instancia,,,1,Penal Federal
-8,CAMARA FEDERAL DE CASACION PENAL - VOCALIA 10,Primera Instancia,,,1,Penal Federal
-9,CAMARA FEDERAL DE CASACION PENAL - VOCALIA 4,Primera Instancia,,,1,Penal Federal
-10,CAMARA FEDERAL DE CASACION PENAL - VOCALIA 6,Primera Instancia,,,1,Penal Federal
-11,CAMARA FEDERAL DE CASACION PENAL - VOCALIA 8,Primera Instancia,,,1,Penal Federal
-12,CAMARA FEDERAL DE COMODORO RIVADAVIA,Primera Instancia,,,1,Penal Federal
-13,CAMARA FEDERAL DE CORDOBA - SALA B,Primera Instancia,,,1,Penal Federal
-14,CAMARA FEDERAL DE PARANÁ,Primera Instancia,,,1,Penal Federal
-15,CAMARA FEDERAL DE ROSARIO - SALA A,Primera Instancia,,,1,Penal Federal
-16,CAMARA FEDERAL DE TUCUMAN,Primera Instancia,,,1,Penal Federal
-17,CAMARA NACIONAL DE APELACIONES EN LO CRIMINAL Y CORRECCIONAL - SALA 5,Primera Instancia,,,2,Penal Federal
-18,CAMARA PENAL ECONOMICO - SALA A,Primera Instancia,,,1,Penal Federal
-19,CAMARA PENAL ECONOMICO - SALA B,Primera Instancia,,,2,Penal Federal
-20,CORTE SUPREMA DE JUSTICIA DE LA NACIÓN - SECRETARÍA DE JUICIOS AMBIENTALES,Primera Instancia,,,2,Penal Federal
-21,CORTE SUPREMA DE JUSTICIA DE LA NACIÓN - SECRETARÍA JUDICIAL DE RELACIONES DE CONSUMO,Primera Instancia,,,2,Penal Federal
-22,CORTE SUPREMA DE JUSTICIA DE LA NACIÓN - SECRETARÍA JUDICIAL Nº 3,Primera Instancia,,,2,Penal Federal
-23,CORTE SUPREMA DE JUSTICIA DE LA NACIÓN - SECRETARÍA PENAL ESPECIAL,Primera Instancia,,,2,Penal Federal
-24,CÁMARA NACIONAL DE CASACIÓN EN LO CRIMINAL Y CORRECCIONAL - SALA 1,Primera Instancia,,,2,Penal Federal
-25,CÁMARA NACIONAL DE CASACIÓN EN LO CRIMINAL Y CORRECCIONAL - SALA 2,Primera Instancia,,,2,Penal Federal
-26,CÁMARA NACIONAL DE CASACIÓN EN LO CRIMINAL Y CORRECCIONAL - SALA 3,Primera Instancia,,,2,Penal Federal
-27,JUZGADO CRIM. Y CORR. FEDERAL DE LA PLATA 3,Primera Instancia,,,1,Penal Federal
-28,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 1,Primera Instancia,,,1,Penal Federal
-29,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 10,Primera Instancia,,,1,Penal Federal
-30,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 11,Primera Instancia,,,1,Penal Federal
-31,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 12,Primera Instancia,,,1,Penal Federal
-32,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 2,Primera Instancia,,,1,Penal Federal
-33,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 3,Primera Instancia,,,1,Penal Federal
-34,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 4,Primera Instancia,,,1,Penal Federal
-35,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 5,Primera Instancia,,,1,Penal Federal
-36,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 6,Primera Instancia,,,1,Penal Federal
-37,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 7,Primera Instancia,,,1,Penal Federal
-38,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 8,Primera Instancia,,,1,Penal Federal
-39,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 9,Primera Instancia,,,1,Penal Federal
-40,JUZGADO FEDERAL CRIMINAL Y CORRECCIONAL DE LOMAS DE ZAMORA 1,Primera Instancia,,,1,Penal Federal
-41,JUZGADO FEDERAL DE BAHÍA BLANCA 1,Primera Instancia,,,1,Penal Federal
-42,JUZGADO FEDERAL DE CALETA OLIVIA,Primera Instancia,,,1,Penal Federal
-43,JUZGADO FEDERAL DE CORDOBA 2,Primera Instancia,,,1,Penal Federal
-44,JUZGADO FEDERAL DE CORRIENTES 1,Primera Instancia,,,1,Penal Federal
-45,JUZGADO FEDERAL DE DOLORES,Primera Instancia,,,1,Penal Federal
-46,JUZGADO FEDERAL DE ELDORADO,Primera Instancia,,,1,Penal Federal
-47,JUZGADO FEDERAL DE FORMOSA 2,Primera Instancia,,,1,Penal Federal
-48,JUZGADO FEDERAL DE GOYA,Primera Instancia,,,1,Penal Federal
-49,JUZGADO FEDERAL DE MAR DEL PLATA 1,Primera Instancia,,,1,Penal Federal
-50,JUZGADO FEDERAL DE NEUQUEN 2,Primera Instancia,,,1,Penal Federal
-51,JUZGADO FEDERAL DE PARANÁ 1,Primera Instancia,,,1,Penal Federal
-52,JUZGADO FEDERAL DE PRESIDENCIA ROQUE SAENZ PEÑA,Primera Instancia,,,1,Penal Federal
-53,JUZGADO FEDERAL DE QUILMES,Primera Instancia,,,1,Penal Federal
-54,JUZGADO FEDERAL DE RAWSON N° 2,Primera Instancia,,,1,Penal Federal
-55,JUZGADO FEDERAL DE RESISTENCIA 1,Primera Instancia,,,1,Penal Federal
-56,JUZGADO FEDERAL DE RIO CUARTO,Primera Instancia,,,1,Penal Federal
-57,JUZGADO FEDERAL DE RIO GALLEGOS,Primera Instancia,,,1,Penal Federal
-58,JUZGADO FEDERAL DE ROSARIO 3,Primera Instancia,,,1,Penal Federal
-59,JUZGADO FEDERAL DE SALTA 1,Primera Instancia,,,1,Penal Federal
-60,JUZGADO FEDERAL DE TUCUMAN 1,Primera Instancia,,,1,Penal Federal
-61,JUZGADO FEDERAL DE TUCUMAN 2,Primera Instancia,,,1,Penal Federal
-62,JUZGADO FEDERAL EN LO CRIM. Y CORR. DE MORON 2,Primera Instancia,,,1,Penal Federal
-63,JUZGADO FEDERAL EN LO CRIM. Y CORR. DE SAN ISIDRO 1,Primera Instancia,,,1,Penal Federal
-64,JUZGADO FEDERAL EN LO CRIM. Y CORR. DE SAN MARTIN 1,Primera Instancia,,,1,Penal Federal
-65,JUZGADO FEDERAL EN LO CRIMINAL Y CORRECCIONAL DE POSADAS,Primera Instancia,,,1,Penal Federal
-66,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 23,Primera Instancia,,,2,Penal Federal
-67,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 26,Primera Instancia,,,2,Penal Federal
-68,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 31,Primera Instancia,,,2,Penal Federal
-69,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 33,Primera Instancia,,,2,Penal Federal
-70,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 34,Primera Instancia,,,2,Penal Federal
-71,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 39,Primera Instancia,,,2,Penal Federal
-72,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 43,Primera Instancia,,,2,Penal Federal
-73,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 44,Primera Instancia,,,2,Penal Federal
-74,JUZGADO PENAL ECONOMICO 3,Primera Instancia,,,2,Penal Federal
-75,JUZGADO PENAL ECONOMICO 4,Primera Instancia,,,2,Penal Federal
-76,JUZGADO PENAL ECONOMICO 7,Primera Instancia,,,2,Penal Federal
-77,JUZGADO PENAL ECONOMICO 8,Primera Instancia,,,2,Penal Federal
-78,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 1,Primera Instancia,,,1,Penal Federal
-79,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 2,Primera Instancia,,,1,Penal Federal
-80,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 3,Primera Instancia,,,1,Penal Federal
-81,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 4,Primera Instancia,,,1,Penal Federal
-82,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 5,Primera Instancia,,,1,Penal Federal
-83,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 6,Primera Instancia,,,1,Penal Federal
-84,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 7,Primera Instancia,,,1,Penal Federal
-85,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 8,Primera Instancia,,,1,Penal Federal
-86,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL DE LA PLATA NRO. 1,Primera Instancia,,,1,Penal Federal
-87,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 1 DE SAN MARTIN,Primera Instancia,,,1,Penal Federal
-88,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 5 DE SAN MARTIN,Primera Instancia,,,1,Penal Federal
-89,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 10 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
-90,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 17 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
-91,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 18 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
-92,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 19 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
-93,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 21 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
-94,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 24 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
-95,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 28 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
+3,CÁMARA FEDERAL DE CASACIÓN PENAL,N/D,"Comodoro Py 2002, PISO 1º (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7476 | cfcasacionpenal.secgeneral@pjn.gov.ar",,1,Desconocido
+4,CAMARA FEDERAL DE CASACION PENAL - SALA 1,Primera Instancia,,,1,Penal Federal
+5,CAMARA FEDERAL DE CASACION PENAL - SALA 2,Primera Instancia,,,1,Penal Federal
+6,CAMARA FEDERAL DE CASACION PENAL - SALA 3,Primera Instancia,,,1,Penal Federal
+7,CAMARA FEDERAL DE CASACION PENAL - SALA 4,Primera Instancia,,,1,Penal Federal
+8,CAMARA FEDERAL DE CASACION PENAL - SALA DE FERIA,Primera Instancia,,,1,Penal Federal
+9,CAMARA FEDERAL DE CASACION PENAL - VOCALIA 10,Primera Instancia,,,1,Penal Federal
+10,CAMARA FEDERAL DE CASACION PENAL - VOCALIA 4,Primera Instancia,,,1,Penal Federal
+11,CAMARA FEDERAL DE CASACION PENAL - VOCALIA 6,Primera Instancia,,,1,Penal Federal
+12,CAMARA FEDERAL DE CASACION PENAL - VOCALIA 8,Primera Instancia,,,1,Penal Federal
+13,CAMARA FEDERAL DE COMODORO RIVADAVIA,Primera Instancia,,,1,Penal Federal
+14,CAMARA FEDERAL DE CORDOBA - SALA B,Primera Instancia,,,1,Penal Federal
+15,CAMARA FEDERAL DE PARANÁ,Primera Instancia,,,1,Penal Federal
+16,CAMARA FEDERAL DE ROSARIO - SALA A,Primera Instancia,,,1,Penal Federal
+17,CAMARA FEDERAL DE TUCUMAN,Primera Instancia,,,1,Penal Federal
+18,CÁMARA NACIONAL DE APELACIONES EN LO CRIMINAL Y CORRECCIONAL FEDERAL,N/D,Comodoro Py 2002 (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032 7575,,1,Desconocido
+19,CAMARA NACIONAL DE APELACIONES EN LO CRIMINAL Y CORRECCIONAL - SALA 5,Primera Instancia,,,1,Penal Federal
+20,CÁMARA NACIONAL DE CASACIÓN EN LO CRIMINAL Y CORRECCIONAL - SALA 1,Primera Instancia,,,1,Penal Federal
+21,CÁMARA NACIONAL DE CASACIÓN EN LO CRIMINAL Y CORRECCIONAL - SALA 2,Primera Instancia,,,1,Penal Federal
+22,CÁMARA NACIONAL DE CASACIÓN EN LO CRIMINAL Y CORRECCIONAL - SALA 3,Primera Instancia,,,1,Penal Federal
+23,CAMARA PENAL ECONOMICO - SALA A,Primera Instancia,,,1,Penal Federal
+24,CAMARA PENAL ECONOMICO - SALA B,Primera Instancia,,,1,Penal Federal
+25,CORTE SUPREMA DE JUSTICIA DE LA NACIÓN - SECRETARÍA DE JUICIOS AMBIENTALES,Primera Instancia,,,1,Penal Federal
+26,CORTE SUPREMA DE JUSTICIA DE LA NACIÓN - SECRETARÍA JUDICIAL DE RELACIONES DE CONSUMO,Primera Instancia,,,1,Penal Federal
+27,CORTE SUPREMA DE JUSTICIA DE LA NACIÓN - SECRETARÍA JUDICIAL Nº 3,Primera Instancia,,,1,Penal Federal
+28,CORTE SUPREMA DE JUSTICIA DE LA NACIÓN - SECRETARÍA PENAL ESPECIAL,Primera Instancia,,,1,Penal Federal
+29,JUZGADO CRIM. Y CORR. FEDERAL DE LA PLATA 3,Primera Instancia,,,1,Penal Federal
+30,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 1,Primera Instancia,,,1,Penal Federal
+31,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 10,Primera Instancia,,,1,Penal Federal
+32,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 11,Primera Instancia,,,1,Penal Federal
+33,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 12,Primera Instancia,,,1,Penal Federal
+34,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 2,Primera Instancia,,,1,Penal Federal
+35,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 3,Primera Instancia,,,1,Penal Federal
+36,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 4,Primera Instancia,,,1,Penal Federal
+37,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 5,Primera Instancia,,,1,Penal Federal
+38,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 6,Primera Instancia,,,1,Penal Federal
+39,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 7,Primera Instancia,,,1,Penal Federal
+40,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 8,Primera Instancia,,,1,Penal Federal
+41,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL 9,Primera Instancia,,,1,Penal Federal
+42,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 1,N/D,"Comodoro Py 2002, 3º (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7102 | jncrimcorrfed1@pjn.gov.ar",,1,Desconocido
+43,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 10,N/D,"Comodoro Py 2002, 4º (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7174 | jncrimcorrfed10@pjn.gov.ar",,1,Desconocido
+44,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 11,N/D,"Comodoro Py 2002, 4º piso (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7181 / 4032-7182 | jncrimcorrfed11@pjn.gov.ar",,1,Desconocido
+45,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 12,N/D,"Comodoro Py 2002, 4º piso (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7190 | jncrimcorrfed12@pjn.gov.ar",,1,Desconocido
+46,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 2,N/D,"Comodoro Py 2002, 3º (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7110 | jncrimcorrfed2@pjn.gov.ar",,1,Desconocido
+47,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 3,N/D,"Comodoro Py 2002, 3º (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7118 | jncrimcorrfed3@pjn.gov.ar",,1,Desconocido
+48,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 4,N/D,"Comodoro Py 2002, 3º (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7126 | jncrimcorrfed4@pjn.gov.ar",,1,Desconocido
+49,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 5,N/D,"Comodoro Py 2002, 3º (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7134 | jncrimcorrfed5@pjn.gov.ar",,1,Desconocido
+50,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 6,N/D,"Comodoro Py 2002, 3º (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7142 | jncrimcorrfed6@pjn.gov.ar",,1,Desconocido
+51,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 7,N/D,"Comodoro Py 2002, 4° piso (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7153 | jncrimcorrfed7@pjn.gov.ar",,1,Desconocido
+52,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 8,N/D,"Comodoro Py 2002, 4º (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7158 | jncrimcorrfed8@pjn.gov.ar",,1,Desconocido
+53,JUZGADO CRIMINAL Y CORRECCIONAL FEDERAL NRO. 9,N/D,"Comodoro Py 2002, 4 (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7167 | jncrimcorrfed9@pjn.gov.ar",,1,Desconocido
+54,JUZGADO FEDERAL CRIMINAL Y CORRECCIONAL DE LOMAS DE ZAMORA 1,Primera Instancia,,,1,Penal Federal
+55,JUZGADO FEDERAL DE BAHÍA BLANCA 1,Primera Instancia,,,1,Penal Federal
+56,JUZGADO FEDERAL DE CALETA OLIVIA,Primera Instancia,,,1,Penal Federal
+57,JUZGADO FEDERAL DE CORDOBA 2,Primera Instancia,,,1,Penal Federal
+58,JUZGADO FEDERAL DE CORRIENTES 1,Primera Instancia,,,1,Penal Federal
+59,JUZGADO FEDERAL DE DOLORES,Primera Instancia,,,1,Penal Federal
+60,JUZGADO FEDERAL DE ELDORADO,Primera Instancia,,,1,Penal Federal
+61,JUZGADO FEDERAL DE FORMOSA 2,Primera Instancia,,,1,Penal Federal
+62,JUZGADO FEDERAL DE GOYA,Primera Instancia,,,1,Penal Federal
+63,JUZGADO FEDERAL DE MAR DEL PLATA 1,Primera Instancia,,,1,Penal Federal
+64,JUZGADO FEDERAL DE NEUQUEN 2,Primera Instancia,,,1,Penal Federal
+65,JUZGADO FEDERAL DE PARANÁ 1,Primera Instancia,,,1,Penal Federal
+66,JUZGADO FEDERAL DE PRESIDENCIA ROQUE SAENZ PEÑA,Primera Instancia,,,1,Penal Federal
+67,JUZGADO FEDERAL DE QUILMES,Primera Instancia,,,1,Penal Federal
+68,JUZGADO FEDERAL DE RAWSON N° 2,Primera Instancia,,,1,Penal Federal
+69,JUZGADO FEDERAL DE RESISTENCIA 1,Primera Instancia,,,1,Penal Federal
+70,JUZGADO FEDERAL DE RIO CUARTO,Primera Instancia,,,1,Penal Federal
+71,JUZGADO FEDERAL DE RIO GALLEGOS,Primera Instancia,,,1,Penal Federal
+72,JUZGADO FEDERAL DE ROSARIO 3,Primera Instancia,,,1,Penal Federal
+73,JUZGADO FEDERAL DE SALTA 1,Primera Instancia,,,1,Penal Federal
+74,JUZGADO FEDERAL DE TUCUMAN 1,Primera Instancia,,,1,Penal Federal
+75,JUZGADO FEDERAL DE TUCUMAN 2,Primera Instancia,,,1,Penal Federal
+76,JUZGADO FEDERAL EN LO CRIM. Y CORR. DE MORON 2,Primera Instancia,,,1,Penal Federal
+77,JUZGADO FEDERAL EN LO CRIM. Y CORR. DE SAN ISIDRO 1,Primera Instancia,,,1,Penal Federal
+78,JUZGADO FEDERAL EN LO CRIM. Y CORR. DE SAN MARTIN 1,Primera Instancia,,,1,Penal Federal
+79,JUZGADO FEDERAL EN LO CRIMINAL Y CORRECCIONAL DE POSADAS,Primera Instancia,,,1,Penal Federal
+80,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 23,Primera Instancia,,,1,Penal Federal
+81,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 26,Primera Instancia,,,1,Penal Federal
+82,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 31,Primera Instancia,,,1,Penal Federal
+83,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 33,Primera Instancia,,,1,Penal Federal
+84,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 34,Primera Instancia,,,1,Penal Federal
+85,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 39,Primera Instancia,,,1,Penal Federal
+86,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 43,Primera Instancia,,,1,Penal Federal
+87,JUZGADO NACIONAL EN LO CRIMINAL Y CORRECCIONAL NRO. 44,Primera Instancia,,,1,Penal Federal
+88,JUZGADO PENAL ECONOMICO 3,Primera Instancia,,,1,Penal Federal
+89,JUZGADO PENAL ECONOMICO 4,Primera Instancia,,,1,Penal Federal
+90,JUZGADO PENAL ECONOMICO 7,Primera Instancia,,,1,Penal Federal
+91,JUZGADO PENAL ECONOMICO 8,Primera Instancia,,,1,Penal Federal
+92,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 1,Primera Instancia,,,1,Penal Federal
+93,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 2,Primera Instancia,,,1,Penal Federal
+94,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 3,Primera Instancia,,,1,Penal Federal
+95,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 4,Primera Instancia,,,1,Penal Federal
+96,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 5,Primera Instancia,,,1,Penal Federal
+97,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 6,Primera Instancia,,,1,Penal Federal
+98,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 7,Primera Instancia,,,1,Penal Federal
+99,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL 8,Primera Instancia,,,1,Penal Federal
+100,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL DE LA PLATA NRO. 1,Primera Instancia,,,1,Penal Federal
+101,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 1,N/D,"Comodoro Py 2002, 1º piso (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7244/7245 | tocrimfed1@pjn.gov.ar",,1,Desconocido
+102,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 1 DE SAN MARTIN,Primera Instancia,,,1,Penal Federal
+103,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 2,N/D,"Comodoro Py 2002, 1º piso (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7254/7255 | tocrimfed2@pjn.gov.ar",,1,Desconocido
+104,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 3,N/D,"Comodoro Py 2002, 7º Piso (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7264/7464/7263 | tocrimfed3@pjn.gov.ar",,1,Desconocido
+105,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 4,N/D,"Comodoro Py 2002, 6º Piso (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7272 / 7273 | tocrimfed4@pjn.gov.ar",,1,Desconocido
+106,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 5,N/D,"Comodoro Py 2002, piso 6 (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7282/7831 | tocrimfed5@pjn.gov.ar",,1,Desconocido
+107,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 5 DE SAN MARTIN,Primera Instancia,,,1,Penal Federal
+108,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 6,N/D,"Comodoro Py 2002, 6º Piso, Ala Rio (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7290/7291 | tocrimfed6@pjn.gov.ar",,1,Desconocido
+109,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 7,N/D,"Talcahuano 550, 6º Piso of. 6118 (C1013AAL) | Ciudad Autónoma de Buenos Aires | (011) 4371-3955 / 4372-2705 | tocrimfed7@pjn.gov.ar",,1,Desconocido
+110,TRIBUNAL ORAL EN LO CRIMINAL FEDERAL NRO. 8,N/D,Comodoro Py 2002 (C1104BEN) | Ciudad Autónoma de Buenos Aires | 4032-7308/7309 | tocrimfed8@pjn.gov.ar,,1,Desconocido
+111,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 10 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
+112,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 17 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
+113,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 18 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
+114,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 19 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
+115,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 21 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
+116,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 24 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal
+117,TRIBUNAL ORAL EN LO CRIMINAL Y CORRECCIONAL NRO. 28 DE LA CAPITAL FEDERAL,Primera Instancia,,,1,Penal Federal

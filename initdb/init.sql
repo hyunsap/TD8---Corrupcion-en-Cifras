@@ -48,13 +48,6 @@ CREATE TABLE secretaria (
         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
--- Estado Procesal
-CREATE TABLE estado_procesal (
-    estado_procesal_id SERIAL PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL UNIQUE,
-    etapa VARCHAR(100)
-);
-
 -- Tipo Delito
 CREATE TABLE tipo_delito (
     tipo TEXT PRIMARY KEY,
@@ -79,7 +72,7 @@ CREATE TABLE expediente (
     caratula TEXT,
     jurisdiccion TEXT,
     tribunal TEXT, -- redundancia textual
-    estado_procesal_id INTEGER REFERENCES estado_procesal(estado_procesal_id) ON DELETE SET NULL,
+    estado_procesal VARCHAR(50) CHECK (estado_procesal IN ('En trámite', 'Terminada')),
     fecha_inicio DATE,
     fecha_ultimo_movimiento DATE,
     camara_origen TEXT,
@@ -252,7 +245,7 @@ CREATE INDEX idx_radicacion_fecha ON radicacion(fecha_radicacion);
 -- Comentarios
 -- ============================================
 COMMENT ON TABLE expediente IS 'Tabla principal que contiene la información de los expedientes judiciales';
-COMMENT ON COLUMN expediente.estado_procesal_id IS 'Referencia al estado procesal (En trámite / Terminada)';
+COMMENT ON COLUMN expediente.estado_procesal IS 'Estado procesal textual: En trámite o Terminada';
 COMMENT ON TABLE parte IS 'Personas físicas o jurídicas involucradas en un expediente';
 COMMENT ON TABLE rol_parte IS 'Roles específicos que una parte cumple en un expediente';
 COMMENT ON TABLE representacion IS 'Relación entre parte y letrado en un expediente';
@@ -269,10 +262,3 @@ COMMENT ON TABLE tribunal_juez IS 'Relación N:M entre tribunales y jueces con i
 INSERT INTO jurisdiccion (jurisdiccion_id, ambito, provincia, departamento_judicial)
 VALUES (1, 'Federal', 'Ciudad Autónoma de Buenos Aires', 'Comodoro Py')
 ON CONFLICT (jurisdiccion_id) DO NOTHING;
-
--- Estados procesales base
-INSERT INTO estado_procesal (estado_procesal_id, nombre, etapa)
-VALUES 
-    (1, 'En trámite', 'Investigación preliminar'),
-    (2, 'Terminada', 'Juicio / Sentencia')
-ON CONFLICT (estado_procesal_id) DO NOTHING;

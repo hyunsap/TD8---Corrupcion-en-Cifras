@@ -114,7 +114,7 @@ def cargar_expediente(conn):
                 cur.execute("""
                     INSERT INTO expediente (
                         numero_expediente, caratula, jurisdiccion, tribunal,
-                        estado_procesal_id, fecha_inicio, fecha_ultimo_movimiento,
+                        estado_procesal, fecha_inicio, fecha_ultimo_movimiento,
                         camara_origen, ano_inicio, delitos, fiscal, fiscalia
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (numero_expediente) DO NOTHING
@@ -123,7 +123,7 @@ def cargar_expediente(conn):
                     parse_nullable(row["caratula"]),
                     parse_nullable(row["jurisdiccion"]),
                     parse_nullable(row["tribunal"]),
-                    parse_nullable(row["estado_procesal_id"]),
+                    parse_nullable(row["estado_procesal"]),
                     parse_nullable_date(row["fecha_inicio"]),
                     parse_nullable_date(row["fecha_ultimo_movimiento"]),
                     parse_nullable(row["camara_origen"]),
